@@ -1,62 +1,51 @@
-import { Tabs } from 'expo-router';
-import { BlurView } from 'expo-blur';
-import { Platform } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
+import { DynamicColorIOS } from 'react-native';
+import { ThemeProvider, DarkTheme } from '@react-navigation/native';
 
 export default function TabsLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#0070D4',
-        tabBarInactiveTintColor: '#A0A0A0',
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: Platform.OS === 'ios' ? 'transparent' : '#1A1A1A',
-          borderTopWidth: 0,
-          elevation: 0,
-        },
-        tabBarBackground: () =>
-          Platform.OS === 'ios' ? (
-            <BlurView
-              tint="dark"
-              intensity={100}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                bottom: 0,
-                right: 0,
-              }}
-            />
-          ) : null,
-      }}
-    >
-      <Tabs.Screen
-        name="accueil"
-        options={{
-          title: 'Accueil',
-          tabBarIcon: ({ color, size = 24 }) => <Ionicons name="home" size={size} color={color} />,
+    <ThemeProvider value={DarkTheme}>
+      <NativeTabs
+        tintColor={DynamicColorIOS({
+          dark: '#0070D4',
+          light: '#0070D4',
+        })}
+        labelStyle={{
+          default: {
+            color: DynamicColorIOS({
+              dark: '#FFFFFF',
+              light: '#FFFFFF',
+            }),
+          },
+          selected: {
+            color: DynamicColorIOS({
+              dark: '#0070D4',
+              light: '#0070D4',
+            }),
+          },
         }}
-      />
-      <Tabs.Screen
-        name="entrainement"
-        options={{
-          title: 'Entraînement',
-          tabBarIcon: ({ color, size = 24 }) => (
-            <MaterialCommunityIcons name="dumbbell" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size = 24 }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+      >
+        <NativeTabs.Trigger name="accueil">
+          <Icon sf={{ default: 'house', selected: 'house.fill' }} drawable="home" />
+          <Label>Accueil</Label>
+        </NativeTabs.Trigger>
+
+        <NativeTabs.Trigger name="entrainement">
+          <Icon
+            sf={{
+              default: 'figure.strengthtraining.traditional',
+              selected: 'figure.strengthtraining.traditional',
+            }}
+            drawable="fitness_center"
+          />
+          <Label>Entraînement</Label>
+        </NativeTabs.Trigger>
+
+        <NativeTabs.Trigger name="profile">
+          <Icon sf={{ default: 'person', selected: 'person.fill' }} drawable="person" />
+          <Label>Profile</Label>
+        </NativeTabs.Trigger>
+      </NativeTabs>
+    </ThemeProvider>
   );
 }
