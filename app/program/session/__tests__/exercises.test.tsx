@@ -94,4 +94,46 @@ describe('AddExercisesScreen', () => {
     fireEvent.changeText(searchInput, '');
     expect(screen.getByText('Barbell Bench Press')).toBeTruthy();
   });
+
+  it('selects an exercise on press and shows selection border', () => {
+    render(<AddExercisesScreen />);
+    const item = screen.getByTestId('exercise-item-ex-001');
+    fireEvent.press(item);
+    expect(screen.getByTestId('selection-border-ex-001')).toBeTruthy();
+  });
+
+  it('unselects an exercise on second press and removes selection border', () => {
+    render(<AddExercisesScreen />);
+    const item = screen.getByTestId('exercise-item-ex-001');
+    fireEvent.press(item);
+    expect(screen.getByTestId('selection-border-ex-001')).toBeTruthy();
+    fireEvent.press(item);
+    expect(screen.queryByTestId('selection-border-ex-001')).toBeNull();
+  });
+
+  it('can select multiple exercises simultaneously', () => {
+    render(<AddExercisesScreen />);
+    fireEvent.press(screen.getByTestId('exercise-item-ex-001'));
+    fireEvent.press(screen.getByTestId('exercise-item-ex-002'));
+    expect(screen.getByTestId('selection-border-ex-001')).toBeTruthy();
+    expect(screen.getByTestId('selection-border-ex-002')).toBeTruthy();
+  });
+
+  it('unselecting one exercise does not affect others', () => {
+    render(<AddExercisesScreen />);
+    fireEvent.press(screen.getByTestId('exercise-item-ex-001'));
+    fireEvent.press(screen.getByTestId('exercise-item-ex-002'));
+    fireEvent.press(screen.getByTestId('exercise-item-ex-001'));
+    expect(screen.queryByTestId('selection-border-ex-001')).toBeNull();
+    expect(screen.getByTestId('selection-border-ex-002')).toBeTruthy();
+  });
+
+  it('selection persists through search filter changes', () => {
+    render(<AddExercisesScreen />);
+    fireEvent.press(screen.getByTestId('exercise-item-ex-001'));
+    const searchInput = screen.getByTestId('search-input');
+    fireEvent.changeText(searchInput, 'Barbell Bench Press');
+    fireEvent.changeText(searchInput, '');
+    expect(screen.getByTestId('selection-border-ex-001')).toBeTruthy();
+  });
 });

@@ -11,6 +11,7 @@ const exercises = exercisesData as Exercise[];
 
 export default function AddExercisesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filtered = exercises.filter((ex) =>
     ex.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -18,6 +19,18 @@ export default function AddExercisesScreen() {
 
   const handleBack = () => {
     router.back();
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   return (
@@ -52,23 +65,34 @@ export default function AddExercisesScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         initialNumToRender={exercises.length}
-        renderItem={({ item }) => (
-          <View style={styles.exerciseItem} testID={`exercise-item-${item.id}`}>
-            <Image
-              source={exerciseImages[item.imagePath]}
-              style={styles.exerciseImage}
-              testID={`exercise-image-${item.id}`}
-            />
-            <View style={styles.exerciseInfo}>
-              <Text style={styles.exerciseName} testID={`exercise-name-${item.id}`}>
-                {item.name}
-              </Text>
-              <Text style={styles.exerciseMuscle} testID={`exercise-muscle-${item.id}`}>
-                {item.muscleGroup}
-              </Text>
-            </View>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const isSelected = selectedIds.has(item.id);
+          return (
+            <TouchableOpacity
+              style={[styles.exerciseItem, isSelected && styles.exerciseItemSelected]}
+              onPress={() => toggleSelection(item.id)}
+              activeOpacity={0.7}
+              testID={`exercise-item-${item.id}`}
+            >
+              {isSelected && (
+                <View style={styles.selectionBorder} testID={`selection-border-${item.id}`} />
+              )}
+              <Image
+                source={exerciseImages[item.imagePath]}
+                style={styles.exerciseImage}
+                testID={`exercise-image-${item.id}`}
+              />
+              <View style={styles.exerciseInfo}>
+                <Text style={styles.exerciseName} testID={`exercise-name-${item.id}`}>
+                  {item.name}
+                </Text>
+                <Text style={styles.exerciseMuscle} testID={`exercise-muscle-${item.id}`}>
+                  {item.muscleGroup}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
         contentContainerStyle={styles.listContent}
         testID="exercise-list"
       />
@@ -125,6 +149,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#2C2C2E',
+  },
+  exerciseItemSelected: {
+    backgroundColor: 'rgba(0, 112, 212, 0.08)',
+  },
+  selectionBorder: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: '#0070D4',
+    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 2,
   },
   exerciseImage: {
     width: 56,

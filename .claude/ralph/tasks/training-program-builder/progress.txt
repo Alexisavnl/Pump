@@ -139,3 +139,16 @@ Run the Ralph agent to start execution.
   - `jest.clearAllMocks()` does NOT reset `mockReturnValue` — if a test calls `mockReturnValue(someValue)`, subsequent tests see that value unless overridden in `beforeEach`
   - Data flow between pages: use MMKV draft as shared state; session page writes to draft on validate, program page reads from draft via `useFocusEffect`
 ---
+
+## 2026-03-18 - US-010
+
+- Created `/app/program/session/exercises.tsx` with header, search bar, and exercise list
+- Created `/data/exerciseImages.ts` static require() map for all 30 exercise images
+- Updated `/app/program/session/new.tsx` to navigate to exercises page on button press
+- Created `/app/program/session/__tests__/exercises.test.tsx` with 10 tests (search, filter, render)
+- **Learnings for future iterations:**
+  - FlatList virtualizes items by default (initialNumToRender=10); set `initialNumToRender={data.length}` to render all items in tests — otherwise tests looking for items beyond position 10 will fail
+  - Static image requires need a mapping file since React Native can't use dynamic `require()` paths at runtime
+  - String `includes()` is exact substring match — "barbell curl" does NOT match "Barbell Preacher Curl" (searches for consecutive "barbell curl" string, not individual words)
+  - Mock `exerciseImages` module in tests: `jest.mock('../../../../data/exerciseImages', () => ({ default: {} }))`
+---

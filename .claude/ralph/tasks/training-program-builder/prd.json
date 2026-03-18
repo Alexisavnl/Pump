@@ -177,8 +177,8 @@
         "Typecheck passes"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created exerciseImages.ts as static require() map for all 30 exercises. FlatList needs initialNumToRender={exercises.length} to render all items in tests (default is 10). Search filters by substring match."
     },
     {
       "id": "US-011",
