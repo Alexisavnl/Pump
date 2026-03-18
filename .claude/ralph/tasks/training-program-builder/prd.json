@@ -140,8 +140,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "NativeWind not installed — used StyleSheet. Checkmark validate button calls router.back(). Empty exercise list shows placeholder text."
     },
     {
       "id": "US-009",

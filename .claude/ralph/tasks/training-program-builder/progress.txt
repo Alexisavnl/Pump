@@ -112,3 +112,17 @@ Run the Ralph agent to start execution.
   - Mock `useLocalSearchParams` in tests: `jest.mock('expo-router', () => ({ router: { ... }, useLocalSearchParams: jest.fn(() => ({ day: 'LUN' })) }))`
   - To test different params, call `useLocalSearchParams.mockReturnValue(...)` via `jest.requireMock()`
 ---
+
+## 2026-03-18 - US-008
+
+- Expanded `/app/program/session/new.tsx` with full edit session layout
+- Added: editable title input (default "Upper A"), editable description input (default "Description")
+- Added: empty exercise list area with placeholder text
+- Added: "+ Ajouter des exercices" button at bottom with blue border
+- Added: checkmark validate button (top right) that calls router.back()
+- Updated `/app/program/session/__tests__/new.test.tsx` from 5 to 13 tests
+- **Learnings for future iterations:**
+  - Session page uses ScrollView with footer outside it (for fixed bottom button pattern)
+  - `fireEvent.changeText(input, value)` tests controlled TextInput; check `input.props.value`
+  - Validate checkmark button uses `testID="validate-button"` for test targeting
+---
