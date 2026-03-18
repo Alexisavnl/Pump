@@ -102,6 +102,7 @@ export default function NewSessionScreen() {
           style={styles.addExercisesButton}
           activeOpacity={0.7}
           testID="add-exercises-button"
+          onPress={() => router.push('/program/session/exercises')}
         >
           <Text style={styles.addExercisesText}>+ Ajouter des exercices</Text>
         </TouchableOpacity>
