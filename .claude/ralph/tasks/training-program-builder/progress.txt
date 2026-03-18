@@ -62,3 +62,14 @@ Run the Ralph agent to start execution.
   - Create `/__mocks__/react-native-safe-area-context.js` as a manual mock file (inline jest.mock factory can't reference out-of-scope variables like `React`)
   - `jest-expo` preset handles `__DEV__`, native module setup, and transformIgnorePatterns automatically
 ---
+
+## 2026-03-18 - US-004
+
+- Created `/app/program/new.tsx` route with header and back button
+- Created `/app/program/__tests__/new.test.tsx` with 3 tests (render title, back button, navigation)
+- Updated `/app/(tabs)/__tests__/entrainement.test.tsx` to add navigation test (7 tests total)
+- **Learnings for future iterations:**
+  - `jest.requireMock('module')` must be used instead of `require()` to access mock internals — `require()` triggers ESLint `@typescript-eslint/no-require-imports` warning
+  - Variables defined before `jest.mock()` are undefined at mock factory evaluation time due to hoisting — use inline `jest.fn()` in factory + `jest.requireMock()` in tests
+  - App routing uses Expo Router file-based routing: `/app/program/new.tsx` → route `/program/new`
+---

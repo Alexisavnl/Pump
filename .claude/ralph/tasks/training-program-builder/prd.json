@@ -69,8 +69,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "NativeWind not installed — used StyleSheet. Use jest.requireMock() to access mock functions (avoids jest hoisting issue)."
     },
     {
       "id": "US-005",
