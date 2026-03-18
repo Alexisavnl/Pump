@@ -3,9 +3,13 @@ import { render, screen, fireEvent, act } from '@testing-library/react-native';
 import NewProgramScreen from '../new';
 
 jest.mock('react-native-safe-area-context');
-jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn() },
-}));
+jest.mock('expo-router', () => {
+  const React = require('react');
+  return {
+    router: { back: jest.fn(), push: jest.fn() },
+    useFocusEffect: (cb: () => void) => React.useEffect(cb, []),
+  };
+});
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
 }));
@@ -178,6 +182,95 @@ describe('NewProgramScreen', () => {
       pathname: '/program/session/new',
       params: { day: 'LUN' },
     });
+  });
+
+  it('displays session card when draft has sessions for a day', () => {
+    const { getDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue({
+      days: {
+        LUN: [{ id: 'session-1', title: 'Upper A', description: '', exercises: [] }],
+        MAR: [],
+        MER: [],
+        JEU: [],
+        VEN: [],
+        SAM: [],
+        DIM: [],
+      },
+    });
+    render(<NewProgramScreen />);
+    expect(screen.getByTestId('session-card-session-1')).toBeTruthy();
+    expect(screen.getByText('Upper A')).toBeTruthy();
+    expect(screen.getByText('0 exos')).toBeTruthy();
+  });
+
+  it('navigates to session edit page when session card is pressed', () => {
+    const { getDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue({
+      days: {
+        LUN: [{ id: 'session-1', title: 'Upper A', description: '', exercises: [] }],
+        MAR: [],
+        MER: [],
+        JEU: [],
+        VEN: [],
+        SAM: [],
+        DIM: [],
+      },
+    });
+    const { router } = jest.requireMock('expo-router') as { router: { push: jest.Mock } };
+    render(<NewProgramScreen />);
+    fireEvent.press(screen.getByTestId('session-card-session-1'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/program/session/new',
+      params: { day: 'LUN', sessionId: 'session-1' },
+    });
+  });
+
+  it('still shows "+ Ajouter une séance" button even when sessions exist', () => {
+    const { getDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue({
+      days: {
+        LUN: [{ id: 'session-1', title: 'Upper A', description: '', exercises: [] }],
+        MAR: [],
+        MER: [],
+        JEU: [],
+        VEN: [],
+        SAM: [],
+        DIM: [],
+      },
+    });
+    render(<NewProgramScreen />);
+    expect(screen.getByTestId('add-session-LUN')).toBeTruthy();
+  });
+
+  it('shows multiple session cards when day has multiple sessions', () => {
+    const { getDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue({
+      days: {
+        LUN: [
+          { id: 'session-1', title: 'Upper A', description: '', exercises: [] },
+          { id: 'session-2', title: 'Lower B', description: '', exercises: [] },
+        ],
+        MAR: [],
+        MER: [],
+        JEU: [],
+        VEN: [],
+        SAM: [],
+        DIM: [],
+      },
+    });
+    render(<NewProgramScreen />);
+    expect(screen.getByTestId('session-card-session-1')).toBeTruthy();
+    expect(screen.getByTestId('session-card-session-2')).toBeTruthy();
+    expect(screen.getByText('Upper A')).toBeTruthy();
+    expect(screen.getByText('Lower B')).toBeTruthy();
   });
 
   it('resets auto-save timer on rapid typing (debounce)', () => {

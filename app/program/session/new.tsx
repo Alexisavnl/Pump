@@ -3,6 +3,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { saveDraft, getDraft } from '../../../utils/storage/programs';
+import type { Session, DayKey } from '../../../types/program';
+
+const EMPTY_DAYS: Record<DayKey, Session[]> = {
+  LUN: [],
+  MAR: [],
+  MER: [],
+  JEU: [],
+  VEN: [],
+  SAM: [],
+  DIM: [],
+};
 
 export default function NewSessionScreen() {
   const { day } = useLocalSearchParams<{ day: string }>();
@@ -14,6 +26,22 @@ export default function NewSessionScreen() {
   };
 
   const handleValidate = () => {
+    const newSession: Session = {
+      id: Date.now().toString(),
+      title,
+      description,
+      exercises: [],
+    };
+
+    const draft = getDraft() ?? {};
+    const days = draft.days ?? { ...EMPTY_DAYS };
+
+    if (day && (day as DayKey) in days) {
+      const dayKey = day as DayKey;
+      days[dayKey] = [...days[dayKey], newSession];
+    }
+
+    saveDraft({ ...draft, days });
     router.back();
   };
 

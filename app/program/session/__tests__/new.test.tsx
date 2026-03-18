@@ -10,10 +10,23 @@ jest.mock('expo-router', () => ({
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
 }));
+jest.mock('../../../../utils/storage/programs', () => ({
+  saveDraft: jest.fn(),
+  getDraft: jest.fn(() => null),
+  clearDraft: jest.fn(),
+}));
 
 describe('NewSessionScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { getDraft } = jest.requireMock('../../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue(null);
+    const { useLocalSearchParams } = jest.requireMock('expo-router') as {
+      useLocalSearchParams: jest.Mock;
+    };
+    useLocalSearchParams.mockReturnValue({ day: 'LUN' });
   });
 
   it('renders the session header title', () => {
@@ -97,5 +110,57 @@ describe('NewSessionScreen', () => {
     render(<NewSessionScreen />);
     fireEvent.press(screen.getByTestId('validate-button'));
     expect(router.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves session to draft when validate button is pressed', () => {
+    const { saveDraft } = jest.requireMock('../../../../utils/storage/programs') as {
+      saveDraft: jest.Mock;
+    };
+    render(<NewSessionScreen />);
+    fireEvent.press(screen.getByTestId('validate-button'));
+    expect(saveDraft).toHaveBeenCalledTimes(1);
+    const savedDraft = saveDraft.mock.calls[0][0] as { days: Record<string, unknown[]> };
+    expect(savedDraft.days).toBeDefined();
+    expect(savedDraft.days.LUN).toHaveLength(1);
+  });
+
+  it('saves session with correct title to draft', () => {
+    const { saveDraft } = jest.requireMock('../../../../utils/storage/programs') as {
+      saveDraft: jest.Mock;
+    };
+    render(<NewSessionScreen />);
+    const titleInput = screen.getByTestId('session-title-input');
+    fireEvent.changeText(titleInput, 'Push Day');
+    fireEvent.press(screen.getByTestId('validate-button'));
+    const savedDraft = saveDraft.mock.calls[0][0] as {
+      days: { LUN: { title: string }[] };
+    };
+    expect(savedDraft.days.LUN[0].title).toBe('Push Day');
+  });
+
+  it('appends session to existing day sessions in draft', () => {
+    const { getDraft, saveDraft } = jest.requireMock('../../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+      saveDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue({
+      days: {
+        LUN: [{ id: 'existing-1', title: 'Existing', description: '', exercises: [] }],
+        MAR: [],
+        MER: [],
+        JEU: [],
+        VEN: [],
+        SAM: [],
+        DIM: [],
+      },
+    });
+    render(<NewSessionScreen />);
+    fireEvent.press(screen.getByTestId('validate-button'));
+    const savedDraft = saveDraft.mock.calls[0][0] as {
+      days: { LUN: { title: string }[] };
+    };
+    expect(savedDraft.days.LUN).toHaveLength(2);
+    expect(savedDraft.days.LUN[0].title).toBe('Existing');
+    expect(savedDraft.days.LUN[1].title).toBe('Upper A');
   });
 });

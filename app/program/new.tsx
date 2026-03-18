@@ -1,15 +1,27 @@
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { saveDraft, getDraft, clearDraft } from '../../utils/storage/programs';
+import type { Session, DayKey } from '../../types/program';
 
 const DAYS = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'] as const;
+
+const EMPTY_DAYS: Record<DayKey, Session[]> = {
+  LUN: [],
+  MAR: [],
+  MER: [],
+  JEU: [],
+  VEN: [],
+  SAM: [],
+  DIM: [],
+};
 
 export default function NewProgramScreen() {
   const [title, setTitle] = useState('Push Pull Legs');
   const [description, setDescription] = useState('');
+  const [days, setDays] = useState<Record<DayKey, Session[]>>({ ...EMPTY_DAYS });
   const [showDraftSaved, setShowDraftSaved] = useState(false);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const indicatorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -21,9 +33,20 @@ export default function NewProgramScreen() {
     if (draft) {
       if (draft.title) setTitle(draft.title);
       if (draft.description) setDescription(draft.description);
+      if (draft.days) setDays(draft.days);
     }
     isMountRef.current = false;
   }, []);
+
+  // Reload sessions from draft when screen regains focus
+  useFocusEffect(
+    useCallback(() => {
+      const draft = getDraft();
+      if (draft?.days) {
+        setDays(draft.days);
+      }
+    }, [])
+  );
 
   // Auto-save draft every 2 seconds after last change
   useEffect(() => {
@@ -111,6 +134,23 @@ export default function NewProgramScreen() {
           {DAYS.map((day) => (
             <View key={day} style={styles.dayBlock} testID={`day-block-${day}`}>
               <Text style={styles.dayLabel}>{day}</Text>
+              {days[day].map((session) => (
+                <TouchableOpacity
+                  key={session.id}
+                  style={styles.sessionCard}
+                  activeOpacity={0.7}
+                  testID={`session-card-${session.id}`}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/program/session/new',
+                      params: { day, sessionId: session.id },
+                    })
+                  }
+                >
+                  <Text style={styles.sessionCardTitle}>{session.title}</Text>
+                  <Text style={styles.sessionCardExos}>{session.exercises.length} exos</Text>
+                </TouchableOpacity>
+              ))}
               <TouchableOpacity
                 style={styles.addSessionButton}
                 activeOpacity={0.7}
@@ -206,6 +246,24 @@ const styles = StyleSheet.create({
     color: '#6C6C70',
     textTransform: 'uppercase',
     marginBottom: 12,
+  },
+  sessionCard: {
+    backgroundColor: '#3A3A3C',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sessionCardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  sessionCardExos: {
+    fontSize: 13,
+    color: '#8E8E93',
   },
   addSessionButton: {
     flexDirection: 'row',
