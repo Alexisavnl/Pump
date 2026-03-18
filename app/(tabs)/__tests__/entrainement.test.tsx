@@ -71,7 +71,6 @@ describe('EntrainementScreen', () => {
   });
 
   it('navigates to /program/new when "Nouveau Programme" is pressed', () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { router } = jest.requireMock('expo-router') as { router: { push: jest.Mock } };
     mockGetAllPrograms.mockReturnValue([]);
     render(<EntrainementScreen />);
