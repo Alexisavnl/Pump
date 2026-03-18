@@ -84,3 +84,18 @@ Run the Ralph agent to start execution.
   - ScrollView with `contentContainerStyle` needed for scrollable page content in React Native
   - Day blocks use `testID={`day-block-${day}`}` pattern for targeted test assertions
 ---
+
+## 2026-03-18 - US-006
+
+- Updated `/app/program/new.tsx` with auto-save draft using debounced 2s timer
+- Load draft on mount via `getDraft()`, populate title/description state
+- Clear draft when save button pressed via `clearDraft()`
+- Visual indicator "Brouillon sauvegardé" shown for 2s after each auto-save
+- Added mock for `utils/storage/programs` in test file
+- Updated tests with `jest.useFakeTimers()` for 8 new tests (17 total)
+- **Learnings for future iterations:**
+  - `jest.useFakeTimers()` in `beforeEach` + `jest.useRealTimers()` in `afterEach` is the correct pattern for timer tests
+  - Wrap `jest.advanceTimersByTime()` in `act(() => {...})` so React processes state updates triggered by timers
+  - `isMountRef` with `useRef(true)` set to `false` in mount effect doesn't prevent auto-save on initial mount — the second effect runs AFTER first, so isMountRef is already false. This is OK since initial timer gets cleared by first user interaction.
+  - Mock storage module per-test file: `jest.mock('../../../utils/storage/programs', () => ({ saveDraft: jest.fn(), getDraft: jest.fn(() => null), clearDraft: jest.fn() }))`
+---
