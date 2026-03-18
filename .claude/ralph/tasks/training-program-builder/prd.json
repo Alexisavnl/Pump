@@ -1,0 +1,489 @@
+{
+  "project": "Pump - Training Program Builder",
+  "branchName": "ralph/training-program-builder",
+  "description": "Build a comprehensive workout program creation system that allows users to design, organize, and manage weekly training programs with exercises, sets, reps, and drag-and-drop organization.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create exercises data structure and JSON file",
+      "description": "As a developer, I need a static exercises database with images so the app can display available exercises.",
+      "acceptanceCriteria": [
+        "Create `/data/exercises.json` with exercise list",
+        "Each exercise has: id, name, muscleGroup, imagePath",
+        "Map exercises to existing images in `/images/` directory",
+        "Include at least 20 exercises covering major muscle groups",
+        "Export TypeScript types for Exercise interface",
+        "Tests pass (validate JSON structure)",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Create MMKV storage utilities for programs",
+      "description": "As a developer, I need storage utilities to persist training programs locally.",
+      "acceptanceCriteria": [
+        "Create `/utils/storage/programs.ts` with MMKV functions",
+        "Implement: saveProgram, getProgram, getAllPrograms, deleteProgram",
+        "Implement: saveDraft, getDraft, clearDraft",
+        "Implement: setActiveProgram, getActiveProgram",
+        "TypeScript interfaces for Program, Session, ExerciseConfig, Set",
+        "Tests pass (test all storage functions)",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Build training home page structure",
+      "description": "As a user, I want to see my training programs and create new ones.",
+      "acceptanceCriteria": [
+        "Update `/app/(tabs)/entrainement.tsx` with home layout",
+        "Display \"Nouveau Programme\" button at top (blue border, + icon)",
+        "Section \"MES PROGRAMMES\" below button",
+        "Empty state: \"Aucun programme créé\" when no programs exist",
+        "List saved programs when they exist (just titles for now)",
+        "Tests pass (render tests for home page)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "NativeWind not installed — used StyleSheet. Switched jest config to jest-expo preset."
+    },
+    {
+      "id": "US-004",
+      "title": "Implement \"Nouveau Programme\" navigation",
+      "description": "As a user, I want to click \"Nouveau Programme\" to start creating a new program.",
+      "acceptanceCriteria": [
+        "Create `/app/program/new.tsx` route",
+        "\"Nouveau Programme\" button navigates to new program page",
+        "New page shows header with back button",
+        "Navigation works smoothly with Expo Router stack",
+        "Tests pass (navigation test)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create \"New Program\" page with 7 days layout",
+      "description": "As a user, I want to enter a program title/description and see 7 day blocks for planning.",
+      "acceptanceCriteria": [
+        "Editable program title input at top (default: \"Push Pull Legs\")",
+        "Editable description below title (placeholder: \"Organise ta semaine d'entraînement\")",
+        "7 day blocks: LUN, MAR, MER, JEU, VEN, SAM, DIM",
+        "Each day shows \"+ Ajouter une séance\" button initially",
+        "\"Enregistrer le programme\" button at bottom (blue, centered)",
+        "\"Modifier\" button in top right corner",
+        "Tests pass (component tests)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Implement auto-save draft functionality",
+      "description": "As a user, I want my work to be auto-saved so I don't lose progress if I navigate away.",
+      "acceptanceCriteria": [
+        "Auto-save program data to draft every 2 seconds when editing",
+        "Load draft on page mount if exists",
+        "Clear draft when program is saved successfully",
+        "Visual indicator \"Brouillon sauvegardé\" (subtle, temporary)",
+        "Tests pass (test auto-save timing and draft persistence)",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create \"Add Session\" functionality",
+      "description": "As a user, I want to add a training session to a specific day.",
+      "acceptanceCriteria": [
+        "Clicking \"+ Ajouter une séance\" opens session creation screen",
+        "Create `/app/program/session/new.tsx` route",
+        "Pass day parameter (LUN, MAR, etc.) via route params",
+        "Session page has header \"Modifier la séance\"",
+        "Back button returns to program page",
+        "Tests pass (navigation and params)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Build \"Edit Session\" page structure",
+      "description": "As a user, I want to configure a session with title, description, and exercises.",
+      "acceptanceCriteria": [
+        "Editable session title at top (default: \"Upper A\")",
+        "Editable description below title (default: \"Description\")",
+        "Empty exercise list area",
+        "\"+ Ajouter des exercices\" button (blue border, bottom)",
+        "Checkmark button (top right) to validate and return",
+        "Tests pass (component rendering)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Display session in program day block",
+      "description": "As a user, I want to see my created sessions displayed in the day blocks.",
+      "acceptanceCriteria": [
+        "When session is created, replace \"+ Ajouter une séance\" with session card",
+        "Session card shows: title (e.g., \"Upper A\") and \"X exos\"",
+        "Clicking session card navigates to edit session page",
+        "Multiple sessions per day stack vertically",
+        "Tests pass (test session display)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Create \"Add Exercises\" page with search",
+      "description": "As a user, I want to search and browse available exercises to add to my session.",
+      "acceptanceCriteria": [
+        "Create `/app/program/session/exercises.tsx` route",
+        "\"+ Ajouter des exercices\" button navigates to this page",
+        "Header: \"Ajouter des exercices\" with back button",
+        "Search bar at top: \"Chercher un exercice...\"",
+        "List all exercises from exercises.json",
+        "Each exercise shows: image, name, muscle group",
+        "Search filters by exercise name (case insensitive)",
+        "Tests pass (search functionality)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Implement multi-select exercises",
+      "description": "As a user, I want to select multiple exercises at once to add them to my session.",
+      "acceptanceCriteria": [
+        "Clicking an exercise toggles selection (blue left border indicator)",
+        "Multiple exercises can be selected simultaneously",
+        "Selection state persists while scrolling",
+        "Unselecting an exercise removes the indicator",
+        "Tests pass (multi-select state management)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Add selected exercises to session",
+      "description": "As a user, I want to add selected exercises to my session with one button click.",
+      "acceptanceCriteria": [
+        "\"Ajouter X exercices\" button at bottom (blue, fixed position)",
+        "Button shows count of selected exercises (e.g., \"Ajouter 2 exercices\")",
+        "Button disabled when no exercises selected",
+        "Clicking button adds exercises to session and returns to session page",
+        "Added exercises appear in session exercise list",
+        "Tests pass (add exercises flow)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Display exercises in session list",
+      "description": "As a user, I want to see all exercises I've added to a session.",
+      "acceptanceCriteria": [
+        "Exercises displayed as cards with image and name",
+        "Show collapsed state by default: image + name + \"3 séries · 8-12 reps · 90s\" summary",
+        "Three-dot menu icon on right side of each exercise",
+        "Exercises listed in order they were added",
+        "Empty state if no exercises: shows \"+ Ajouter des exercices\" only",
+        "Tests pass (exercise list rendering)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Implement expandable exercise configuration",
+      "description": "As a user, I want to click on an exercise to expand it and configure sets.",
+      "acceptanceCriteria": [
+        "Clicking exercise card toggles expand/collapse",
+        "Expanded view shows: Notes input, Rest timer, Set table",
+        "Collapsed view shows summary line",
+        "Only one exercise expanded at a time",
+        "Smooth expand/collapse animation",
+        "Tests pass (expand/collapse behavior)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Create set configuration table",
+      "description": "As a user, I want to configure sets with series number, weight, and reps.",
+      "acceptanceCriteria": [
+        "Table with three columns: SÉRIE, KG, REPS",
+        "First row auto-created: 1, 10, 8",
+        "Each cell is editable (number input)",
+        "SÉRIE column auto-increments (1, 2, 3...)",
+        "KG column accepts decimals (10, 10.5, 12.5)",
+        "REPS column shows number by default",
+        "Tests pass (set table functionality)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Implement rep range toggle",
+      "description": "As a user, I want to toggle between fixed reps and rep ranges for my sets.",
+      "acceptanceCriteria": [
+        "Clicking REPS cell shows picker: \"Répétitions\" or \"Plage de répétitions\"",
+        "Default: \"Répétitions\" (single number like \"8\")",
+        "Selecting \"Plage de répétitions\" shows \"8-12\" format with two inputs",
+        "Toggle applies to entire exercise, not per set",
+        "Selection persists when collapsing/expanding",
+        "Tests pass (rep range toggle)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Add rest time and notes configuration",
+      "description": "As a user, I want to set rest time between sets and add notes for the exercise.",
+      "acceptanceCriteria": [
+        "\"Repos : \" with timer input (default: \"désactivé\")",
+        "Clicking rest time shows time picker (seconds)",
+        "\"Notes...\" text input field (multiline)",
+        "Rest time shown in blue with icon",
+        "Both fields optional",
+        "Tests pass (rest and notes inputs)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Implement \"Add Set\" functionality",
+      "description": "As a user, I want to add additional sets to an exercise.",
+      "acceptanceCriteria": [
+        "\"+ Ajouter une série\" button at bottom of set table",
+        "Clicking adds new row with auto-incremented SÉRIE number",
+        "New row copies KG and REPS from last row",
+        "Can add unlimited sets",
+        "Tests pass (add set functionality)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Implement drag & drop for exercises",
+      "description": "As a user, I want to reorder exercises within a session by dragging them.",
+      "acceptanceCriteria": [
+        "Long-press on exercise card enables drag mode",
+        "Visual feedback during drag (lift effect, opacity)",
+        "Drop zones highlighted between exercises",
+        "Releasing drops exercise in new position",
+        "Order persists after reordering",
+        "Tests pass (drag & drop exercises)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Implement drag & drop for sessions between days",
+      "description": "As a user, I want to move sessions between different days of the week.",
+      "acceptanceCriteria": [
+        "Long-press on session card enables drag mode",
+        "Can drag session from one day to another (LUN → MAR)",
+        "Visual feedback during drag",
+        "Drop zones highlighted on valid day targets",
+        "Session moves to new day on drop",
+        "Tests pass (drag & drop sessions)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Add delete functionality for sets",
+      "description": "As a user, I want to delete individual sets from an exercise.",
+      "acceptanceCriteria": [
+        "Swipe left on set row reveals delete button",
+        "Clicking delete removes the set",
+        "SÉRIE numbers auto-renumber after deletion",
+        "Cannot delete if only one set remains",
+        "Confirmation dialog: \"Supprimer cette série ?\"",
+        "Tests pass (delete set)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Add delete functionality for exercises",
+      "description": "As a user, I want to remove exercises from a session.",
+      "acceptanceCriteria": [
+        "Three-dot menu on exercise card shows \"Supprimer\" option",
+        "Clicking shows confirmation: \"Supprimer cet exercice ?\"",
+        "Confirming removes exercise from session",
+        "Can delete all exercises (session becomes empty)",
+        "Tests pass (delete exercise)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Add delete functionality for sessions",
+      "description": "As a user, I want to remove sessions from a day.",
+      "acceptanceCriteria": [
+        "Long-press on session card shows context menu",
+        "Menu includes \"Supprimer la séance\" option",
+        "Confirmation dialog: \"Supprimer cette séance ?\"",
+        "Confirming removes session, shows \"+ Ajouter une séance\" again",
+        "Tests pass (delete session)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Implement \"Enregistrer le programme\" with active status popup",
+      "description": "As a user, I want to save my program and optionally set it as active.",
+      "acceptanceCriteria": [
+        "\"Enregistrer le programme\" button saves all data to MMKV",
+        "Popup appears: \"Rendre ce programme actif ?\" with Oui/Non buttons",
+        "\"Oui\" sets program as active and saves",
+        "\"Non\" saves without setting as active",
+        "Both options clear draft and navigate to home",
+        "Success toast: \"Programme enregistré\"",
+        "Tests pass (save flow with popup)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Display saved programs in home list",
+      "description": "As a user, I want to see all my saved programs on the training home page.",
+      "acceptanceCriteria": [
+        "Load all programs from MMKV on home page mount",
+        "Display program cards in \"MES PROGRAMMES\" section",
+        "Each card shows: title, number of sessions (\"X séances/semaine\")",
+        "Active program has special indicator (star icon or \"ACTIF\" badge)",
+        "Programs sorted by: active first, then by creation date",
+        "Tests pass (program list display)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Implement program editing",
+      "description": "As a user, I want to edit existing programs.",
+      "acceptanceCriteria": [
+        "Clicking program card in home navigates to edit mode",
+        "Edit mode loads program data into new program form",
+        "All fields editable: title, description, sessions, exercises",
+        "\"Modifier\" button in header shows we're editing",
+        "Saving updates existing program instead of creating new",
+        "Tests pass (edit existing program)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Add delete functionality for programs",
+      "description": "As a user, I want to delete programs I no longer need.",
+      "acceptanceCriteria": [
+        "Long-press on program card shows context menu",
+        "Menu includes \"Supprimer le programme\" option",
+        "Confirmation dialog: \"Supprimer ce programme ?\"",
+        "If deleting active program, show warning: \"Ce programme est actif\"",
+        "Confirming removes program from MMKV",
+        "List updates immediately",
+        "Tests pass (delete program)",
+        "Uses NativeWind for all styling (no StyleSheet, no inline styles)",
+        "Typecheck passes"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

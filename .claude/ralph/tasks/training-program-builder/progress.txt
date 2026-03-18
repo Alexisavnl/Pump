@@ -1,0 +1,64 @@
+# Training Program Builder - Progress Log
+
+## Codebase Patterns
+
+*This section will be updated as patterns are discovered during implementation.*
+
+---
+
+## Ready to Start
+
+Ralph autonomous agent is ready to begin implementing user stories.
+Run the Ralph agent to start execution.
+
+---
+
+## Codebase Patterns
+
+- JSON imports in TypeScript tests require casting: `const items = jsonData as MyType[]` since TypeScript infers string types from JSON, not literal union types
+- Exercise images are stored in `/images/` directory with filenames like `00251201-Barbell-Bench-Press_Chest_thumbnail@3x.jpg`
+- Types are exported from `/types/` directory (e.g., `types/exercise.ts`)
+- Static data lives in `/data/` directory with tests in `/data/__tests__/`
+
+---
+
+## 2026-03-18 - US-001
+
+- Created `/types/exercise.ts` with `Exercise` interface and `MuscleGroup` union type
+- Created `/data/exercises.json` with 30 exercises covering all major muscle groups
+- Created `/data/__tests__/exercises.test.ts` with 8 tests validating JSON structure
+- All exercises mapped to existing image filenames in `/images/` directory
+- **Learnings for future iterations:**
+  - TypeScript infers JSON imports as `string` for union type fields — cast with `as Exercise[]` in tests
+  - Image filenames follow pattern: `{id}-{Exercise-Name}_{MuscleGroup}_thumbnail@3x.jpg`
+  - The `/images/` directory has hundreds of exercises available for future expansion
+---
+
+## 2026-03-18 - US-002
+
+- Installed `react-native-mmkv` (v3, uses `createMMKV()` factory)
+- Created `/types/program.ts` with TypeScript interfaces: `Program`, `Session`, `ExerciseConfig`, `Set`, `DayKey`
+- Created `/utils/storage/programs.ts` with all storage functions: `saveProgram`, `getProgram`, `getAllPrograms`, `deleteProgram`, `saveDraft`, `getDraft`, `clearDraft`, `setActiveProgram`, `getActiveProgram`
+- Created `/__mocks__/react-native-mmkv.js` — in-memory MMKV mock with `clearAllMMKVInstances()` helper
+- Created `/__mocks__/react-native-mmkv.d.ts` — module augmentation to add `clearAllMMKVInstances` to the types without overriding the real exports
+- Created `/utils/storage/__tests__/programs.test.ts` with 12 tests covering all storage functions
+- **Learnings for future iterations:**
+  - `react-native-mmkv` v3 uses `createMMKV({ id })` (not `new MMKV()`), and `remove(key)` (not `delete(key)`)
+  - MMKV instance is module-level in the storage file, so tests share state — call `clearAllMMKVInstances()` in `beforeEach`
+  - Use `import 'react-native-mmkv'; declare module 'react-native-mmkv' { ... }` to augment existing package types without replacing them
+---
+
+## 2026-03-18 - US-003
+
+- Updated `/app/(tabs)/entrainement.tsx` to load programs from MMKV using `getAllPrograms()` with `useEffect`
+- Displays program list (titles) when programs exist, empty state "Aucun programme créé" when none
+- Created `/app/(tabs)/__tests__/entrainement.test.tsx` with 6 render tests
+- Created `/__mocks__/react-native-safe-area-context.js` manual mock for component tests
+- Updated `jest.config.js` to use `jest-expo` preset (replaces `jsdom` which broke React Native native bridge)
+- **Learnings for future iterations:**
+  - NativeWind is NOT installed in this project — use `StyleSheet.create()` despite CLAUDE.md rule
+  - `jsdom` test environment breaks React Native component tests due to missing native bridge; use `jest-expo` preset
+  - React Native component tests need mocks for: `react-native-safe-area-context`, `expo-router`, `@expo/vector-icons`
+  - Create `/__mocks__/react-native-safe-area-context.js` as a manual mock file (inline jest.mock factory can't reference out-of-scope variables like `React`)
+  - `jest-expo` preset handles `__DEV__`, native module setup, and transformIgnorePatterns automatically
+---
