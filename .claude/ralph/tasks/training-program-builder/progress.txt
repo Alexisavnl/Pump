@@ -99,3 +99,16 @@ Run the Ralph agent to start execution.
   - `isMountRef` with `useRef(true)` set to `false` in mount effect doesn't prevent auto-save on initial mount — the second effect runs AFTER first, so isMountRef is already false. This is OK since initial timer gets cleared by first user interaction.
   - Mock storage module per-test file: `jest.mock('../../../utils/storage/programs', () => ({ saveDraft: jest.fn(), getDraft: jest.fn(() => null), clearDraft: jest.fn() }))`
 ---
+
+## 2026-03-18 - US-007
+
+- Updated `/app/program/new.tsx` to navigate to `/program/session/new` with `{ day }` param on pressing "+ Ajouter une séance"
+- Created `/app/program/session/new.tsx` — session page with header "Modifier la séance" and back button
+- Created `/app/program/session/__tests__/new.test.tsx` with 5 tests (render, back nav, day param display)
+- Added navigation test to `/app/program/__tests__/new.test.tsx` (18 tests total)
+- **Learnings for future iterations:**
+  - Expo Router navigation with params: `router.push({ pathname: '/program/session/new', params: { day } })`
+  - Read route params with `useLocalSearchParams<{ day: string }>()` from `expo-router`
+  - Mock `useLocalSearchParams` in tests: `jest.mock('expo-router', () => ({ router: { ... }, useLocalSearchParams: jest.fn(() => ({ day: 'LUN' })) }))`
+  - To test different params, call `useLocalSearchParams.mockReturnValue(...)` via `jest.requireMock()`
+---

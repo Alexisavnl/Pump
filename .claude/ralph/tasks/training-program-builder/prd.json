@@ -122,8 +122,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Navigate using router.push with { pathname, params: { day } }; useLocalSearchParams to read day in session page."
     },
     {
       "id": "US-008",
