@@ -157,8 +157,8 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Sessions stored in draft days field. Session page saves to draft on validate. Program page uses useFocusEffect to reload sessions from draft. useFocusEffect mock must use React.useEffect(cb, []) to avoid infinite re-render loop in tests."
     },
     {
       "id": "US-010",

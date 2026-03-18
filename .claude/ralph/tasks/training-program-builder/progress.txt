@@ -126,3 +126,16 @@ Run the Ralph agent to start execution.
   - `fireEvent.changeText(input, value)` tests controlled TextInput; check `input.props.value`
   - Validate checkmark button uses `testID="validate-button"` for test targeting
 ---
+
+## 2026-03-18 - US-009
+
+- Updated `/app/program/session/new.tsx`: on validate, creates Session object, appends to draft `days[day]`, saves draft, then navigates back
+- Updated `/app/program/new.tsx`: added `days` state, `useFocusEffect` to reload sessions on focus, session cards in day blocks
+- Added session card styles (title + exercise count) with navigation to session edit page
+- Updated `/app/program/__tests__/new.test.tsx`: changed `useFocusEffect` mock to use `React.useEffect(cb, [])`, added 4 session display tests (21 total)
+- Updated `/app/program/session/__tests__/new.test.tsx`: added storage mock, reset `useLocalSearchParams` in `beforeEach`, added 4 session save tests (17 total)
+- **Learnings for future iterations:**
+  - `useFocusEffect` mock: use `React.useEffect(cb, [])` inside mock, NOT `cb()` directly — direct call runs on every render and causes infinite loop when it sets state
+  - `jest.clearAllMocks()` does NOT reset `mockReturnValue` — if a test calls `mockReturnValue(someValue)`, subsequent tests see that value unless overridden in `beforeEach`
+  - Data flow between pages: use MMKV draft as shared state; session page writes to draft on validate, program page reads from draft via `useFocusEffect`
+---
