@@ -1,0 +1,182 @@
+[
+  {
+    "id": "ex-001",
+    "name": "Barbell Bench Press",
+    "muscleGroup": "Chest",
+    "imagePath": "00251201-Barbell-Bench-Press_Chest_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-002",
+    "name": "Barbell Incline Bench Press",
+    "muscleGroup": "Chest",
+    "imagePath": "00471201-Barbell-Incline-Bench-Press_Chest_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-003",
+    "name": "Barbell Decline Bench Press",
+    "muscleGroup": "Chest",
+    "imagePath": "00331201-Barbell-Decline-Bench-Press_Chest_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-004",
+    "name": "Assisted Chest Dip",
+    "muscleGroup": "Chest",
+    "imagePath": "00091201-Assisted-Chest-Dip-(kneeling)_Chest_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-005",
+    "name": "Barbell Bent Over Row",
+    "muscleGroup": "Back",
+    "imagePath": "00271201-Barbell-Bent-Over-Row_Back_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-006",
+    "name": "Assisted Pull-up",
+    "muscleGroup": "Back",
+    "imagePath": "00171201-Assisted-Pull-up_Back_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-007",
+    "name": "Barbell Shrug",
+    "muscleGroup": "Back",
+    "imagePath": "00951201-Barbell-Shrug_Back_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-008",
+    "name": "Cable Bar Lateral Pulldown",
+    "muscleGroup": "Back",
+    "imagePath": "01501201-Cable-Bar-Lateral-Pulldown_Back_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-009",
+    "name": "Barbell Clean and Press",
+    "muscleGroup": "Shoulders",
+    "imagePath": "00281201-Barbell-Clean-and-Press_Shoulders_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-010",
+    "name": "Barbell Upright Row",
+    "muscleGroup": "Shoulders",
+    "imagePath": "01211201-Barbell-Upright-Row_Shoulders_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-011",
+    "name": "Cable Lateral Raise",
+    "muscleGroup": "Shoulders",
+    "imagePath": "01781201-Cable-Lateral-Raise_shoulder_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-012",
+    "name": "Cable Front Raise",
+    "muscleGroup": "Shoulders",
+    "imagePath": "01621201-Cable-Front-Raise_Shoulders_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-013",
+    "name": "Barbell Curl",
+    "muscleGroup": "Biceps",
+    "imagePath": "00311201-Barbell-Curl_Upper-Arms_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-014",
+    "name": "Barbell Preacher Curl",
+    "muscleGroup": "Biceps",
+    "imagePath": "00701201-Barbell-Preacher-Curl_Upper-Arms_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-015",
+    "name": "Cable Curl",
+    "muscleGroup": "Biceps",
+    "imagePath": "01561201-Cable-Curl_Upper-Arms_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-016",
+    "name": "Barbell Lying Triceps Extension",
+    "muscleGroup": "Triceps",
+    "imagePath": "00601201-Barbell-Lying-Triceps-Extension-Skull-Crusher_Upper-Arms_thumbnail_@3x.jpg"
+  },
+  {
+    "id": "ex-017",
+    "name": "Barbell Close Grip Bench Press",
+    "muscleGroup": "Triceps",
+    "imagePath": "00301201-Barbell-Close-Grip-Bench-Press_Upper-Arms_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-018",
+    "name": "Assisted Triceps Dip",
+    "muscleGroup": "Triceps",
+    "imagePath": "00191201-Assisted-Triceps-Dip-(kneeling)_Upper-Arms_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-019",
+    "name": "Barbell Full Squat",
+    "muscleGroup": "Quadriceps",
+    "imagePath": "00431201-Barbell-Full-Squat_Thighs_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-020",
+    "name": "Barbell Front Squat",
+    "muscleGroup": "Quadriceps",
+    "imagePath": "00421201-Barbell-Front-Squat_Hips_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-021",
+    "name": "Barbell Lunge",
+    "muscleGroup": "Quadriceps",
+    "imagePath": "00541201-Barbell-Lunge_Thighs_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-022",
+    "name": "Barbell Romanian Deadlift",
+    "muscleGroup": "Hamstrings",
+    "imagePath": "00851201-Barbell-Romanian-Deadlift_Hips-FIX_thumbnail_@3x.jpg"
+  },
+  {
+    "id": "ex-023",
+    "name": "Barbell Deadlift",
+    "muscleGroup": "Glutes",
+    "imagePath": "00321201-Barbell-Deadlift_Hips-FIX_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-024",
+    "name": "Barbell Sumo Deadlift",
+    "muscleGroup": "Glutes",
+    "imagePath": "01171201-Barbell-Sumo-Deadlift_Hips_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-025",
+    "name": "Barbell Standing Leg Calf Raise",
+    "muscleGroup": "Calves",
+    "imagePath": "01081101-Barbell-Standing-Leg-Calf-Raise_Calf_small_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-026",
+    "name": "Sit-up",
+    "muscleGroup": "Abs",
+    "imagePath": "00011201-3-4-Sit-up_Waist_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-027",
+    "name": "Air Bike",
+    "muscleGroup": "Abs",
+    "imagePath": "00031201-air-bike-m_waist_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-028",
+    "name": "Bicycle Twisting Crunch",
+    "muscleGroup": "Abs",
+    "imagePath": "01471201-Bycicle-Twisting-Crunch_Waist_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-029",
+    "name": "Battling Ropes",
+    "muscleGroup": "Cardio",
+    "imagePath": "01281201-Battling-Ropes_thumbnail@3x.jpg"
+  },
+  {
+    "id": "ex-030",
+    "name": "Barbell Good Morning",
+    "muscleGroup": "Hamstrings",
+    "imagePath": "00441201-Barbell-Good-Morning_Thighs_thumbnail@3x.jpg"
+  }
+]
