@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render, screen, fireEvent, act } from '@testing-library/react-native';
 import NewProgramScreen from '../new';
 
 jest.mock('react-native-safe-area-context');
@@ -9,10 +9,24 @@ jest.mock('expo-router', () => ({
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
 }));
+jest.mock('../../../utils/storage/programs', () => ({
+  saveDraft: jest.fn(),
+  getDraft: jest.fn(() => null),
+  clearDraft: jest.fn(),
+}));
 
 describe('NewProgramScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
+    const { getDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue(null);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('renders the page title', () => {
@@ -77,5 +91,112 @@ describe('NewProgramScreen', () => {
     const input = screen.getByTestId('program-title-input');
     fireEvent.changeText(input, 'My New Program');
     expect(input.props.value).toBe('My New Program');
+  });
+
+  it('loads draft on mount if exists', () => {
+    const { getDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      getDraft: jest.Mock;
+    };
+    getDraft.mockReturnValue({ title: 'Saved Draft', description: 'Draft description' });
+    render(<NewProgramScreen />);
+    expect(screen.getByTestId('program-title-input').props.value).toBe('Saved Draft');
+    expect(screen.getByTestId('program-description-input').props.value).toBe('Draft description');
+  });
+
+  it('auto-saves draft after 2 seconds when title changes', () => {
+    const { saveDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      saveDraft: jest.Mock;
+    };
+    render(<NewProgramScreen />);
+    const input = screen.getByTestId('program-title-input');
+    fireEvent.changeText(input, 'New Title');
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    expect(saveDraft).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Title' }));
+  });
+
+  it('does not auto-save before 2 seconds', () => {
+    const { saveDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      saveDraft: jest.Mock;
+    };
+    render(<NewProgramScreen />);
+    const input = screen.getByTestId('program-title-input');
+    fireEvent.changeText(input, 'New Title');
+
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
+
+    expect(saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('shows "Brouillon sauvegardé" indicator after auto-save', () => {
+    render(<NewProgramScreen />);
+    const input = screen.getByTestId('program-title-input');
+    fireEvent.changeText(input, 'New Title');
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    expect(screen.getByTestId('draft-saved-indicator')).toBeTruthy();
+    expect(screen.getByText('Brouillon sauvegardé')).toBeTruthy();
+  });
+
+  it('hides "Brouillon sauvegardé" indicator after 2 more seconds', () => {
+    render(<NewProgramScreen />);
+    const input = screen.getByTestId('program-title-input');
+    fireEvent.changeText(input, 'New Title');
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    expect(screen.queryByTestId('draft-saved-indicator')).toBeNull();
+  });
+
+  it('clears draft when save button is pressed', () => {
+    const { clearDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      clearDraft: jest.Mock;
+    };
+    render(<NewProgramScreen />);
+    fireEvent.press(screen.getByTestId('save-program-button'));
+    expect(clearDraft).toHaveBeenCalledTimes(1);
+  });
+
+  it('resets auto-save timer on rapid typing (debounce)', () => {
+    const { saveDraft } = jest.requireMock('../../../utils/storage/programs') as {
+      saveDraft: jest.Mock;
+    };
+    render(<NewProgramScreen />);
+    const input = screen.getByTestId('program-title-input');
+
+    fireEvent.changeText(input, 'A');
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    fireEvent.changeText(input, 'AB');
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    fireEvent.changeText(input, 'ABC');
+
+    // Only 1 second has passed since last change, should not save yet
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(saveDraft).not.toHaveBeenCalled();
+
+    // Now 2 seconds after last change
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(saveDraft).toHaveBeenCalledTimes(1);
   });
 });

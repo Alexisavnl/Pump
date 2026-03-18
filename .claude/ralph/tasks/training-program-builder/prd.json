@@ -88,8 +88,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "NativeWind not installed — used StyleSheet. Removed unused eslint-disable directives from tests."
     },
     {
       "id": "US-006",

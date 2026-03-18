@@ -73,3 +73,14 @@ Run the Ralph agent to start execution.
   - Variables defined before `jest.mock()` are undefined at mock factory evaluation time due to hoisting — use inline `jest.fn()` in factory + `jest.requireMock()` in tests
   - App routing uses Expo Router file-based routing: `/app/program/new.tsx` → route `/program/new`
 ---
+
+## 2026-03-18 - US-005
+
+- Expanded `/app/program/new.tsx` with full layout: title input, description input, 7 day blocks, save button, modifier button
+- Updated `/app/program/__tests__/new.test.tsx` with 10 tests covering all new UI elements
+- Removed unused `eslint-disable-next-line` directives in test files (lint warning cleanup)
+- **Learnings for future iterations:**
+  - `eslint-disable-next-line @typescript-eslint/no-var-requires` is no longer needed for `jest.requireMock()` — ESLint doesn't flag it as `require()`
+  - ScrollView with `contentContainerStyle` needed for scrollable page content in React Native
+  - Day blocks use `testID={`day-block-${day}`}` pattern for targeted test assertions
+---

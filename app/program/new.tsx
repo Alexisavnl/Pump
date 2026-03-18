@@ -2,16 +2,62 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { saveDraft, getDraft, clearDraft } from '../../utils/storage/programs';
 
 const DAYS = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'] as const;
 
 export default function NewProgramScreen() {
   const [title, setTitle] = useState('Push Pull Legs');
   const [description, setDescription] = useState('');
+  const [showDraftSaved, setShowDraftSaved] = useState(false);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const indicatorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountRef = useRef(true);
+
+  // Load draft on mount
+  useEffect(() => {
+    const draft = getDraft();
+    if (draft) {
+      if (draft.title) setTitle(draft.title);
+      if (draft.description) setDescription(draft.description);
+    }
+    isMountRef.current = false;
+  }, []);
+
+  // Auto-save draft every 2 seconds after last change
+  useEffect(() => {
+    if (isMountRef.current) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      saveDraft({ title, description });
+      setShowDraftSaved(true);
+
+      if (indicatorTimerRef.current) {
+        clearTimeout(indicatorTimerRef.current);
+      }
+      indicatorTimerRef.current = setTimeout(() => {
+        setShowDraftSaved(false);
+      }, 2000);
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [title, description]);
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleSave = () => {
+    clearDraft();
   };
 
   return (
@@ -34,6 +80,12 @@ export default function NewProgramScreen() {
           <Text style={styles.modifierText}>Modifier</Text>
         </TouchableOpacity>
       </View>
+
+      {showDraftSaved && (
+        <View style={styles.draftIndicator} testID="draft-saved-indicator">
+          <Text style={styles.draftIndicatorText}>Brouillon sauvegardé</Text>
+        </View>
+      )}
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <TextInput
@@ -75,6 +127,7 @@ export default function NewProgramScreen() {
           style={styles.saveButton}
           activeOpacity={0.7}
           testID="save-program-button"
+          onPress={handleSave}
         >
           <Text style={styles.saveButtonText}>Enregistrer le programme</Text>
         </TouchableOpacity>
@@ -180,5 +233,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  draftIndicator: {
+    alignSelf: 'center',
+    backgroundColor: '#3A3A3C',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 8,
+  },
+  draftIndicatorText: {
+    fontSize: 12,
+    color: '#8E8E93',
   },
 });
