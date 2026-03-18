@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, fireEvent } from '@testing-library/react-native';
 import EntrainementScreen from '../entrainement';
 import { getAllPrograms } from '../../../utils/storage/programs';
 import type { Program } from '../../../types/program';
@@ -68,5 +68,14 @@ describe('EntrainementScreen', () => {
     mockGetAllPrograms.mockReturnValue([]);
     render(<EntrainementScreen />);
     expect(mockGetAllPrograms).toHaveBeenCalledTimes(1);
+  });
+
+  it('navigates to /program/new when "Nouveau Programme" is pressed', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { router } = jest.requireMock('expo-router') as { router: { push: jest.Mock } };
+    mockGetAllPrograms.mockReturnValue([]);
+    render(<EntrainementScreen />);
+    fireEvent.press(screen.getByTestId('new-program-button'));
+    expect(router.push).toHaveBeenCalledWith('/program/new');
   });
 });
