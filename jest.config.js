@@ -1,11 +1,5 @@
 module.exports = {
-  testEnvironment: 'jsdom',
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: './babel.config.js' }],
-  },
-  transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native|expo|@expo|@testing-library))',
-  ],
+  preset: 'jest-expo',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
     '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
