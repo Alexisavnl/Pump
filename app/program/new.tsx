@@ -115,6 +115,7 @@ export default function NewProgramScreen() {
                 style={styles.addSessionButton}
                 activeOpacity={0.7}
                 testID={`add-session-${day}`}
+                onPress={() => router.push({ pathname: '/program/session/new', params: { day } })}
               >
                 <Ionicons name="add" size={20} color="#0070D4" />
                 <Text style={styles.addSessionText}>Ajouter une séance</Text>

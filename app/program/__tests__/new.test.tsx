@@ -170,6 +170,16 @@ describe('NewProgramScreen', () => {
     expect(clearDraft).toHaveBeenCalledTimes(1);
   });
 
+  it('navigates to session/new with day param when "Ajouter une séance" is pressed', () => {
+    const { router } = jest.requireMock('expo-router') as { router: { push: jest.Mock } };
+    render(<NewProgramScreen />);
+    fireEvent.press(screen.getByTestId('add-session-LUN'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/program/session/new',
+      params: { day: 'LUN' },
+    });
+  });
+
   it('resets auto-save timer on rapid typing (debounce)', () => {
     const { saveDraft } = jest.requireMock('../../../utils/storage/programs') as {
       saveDraft: jest.Mock;
