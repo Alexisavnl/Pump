@@ -1,12 +1,14 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback } from 'react';
 import {
   getActiveProgram,
   getProgram,
   markWorkoutDone,
   isWorkoutDone,
+  saveDraft,
 } from '../../utils/storage/programs';
 import exerciseImages from '../../data/exerciseImages';
 import type { Program, DayKey, ExerciseConfig } from '../../types/program';
@@ -150,9 +152,23 @@ export default function AccueilScreen() {
               <Text style={styles.dayLabel} testID="day-label">
                 {isToday ? "Aujourd'hui" : DAY_LABELS[selectedDay]}
               </Text>
-              <Text style={styles.sessionTitle} testID="session-title">
-                {session.title}
-              </Text>
+              <View style={styles.sessionTitleRow}>
+                <Text style={styles.sessionTitle} testID="session-title">
+                  {session.title}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (activeProgram) saveDraft(activeProgram);
+                    router.push(
+                      `/entrainement/program/session/new?day=${selectedDay}&sessionId=${session.id}&programId=${activeProgram?.id}`
+                    );
+                  }}
+                  testID="edit-session-button"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="pencil" size={18} color="#8E8E93" />
+                </TouchableOpacity>
+              </View>
               <View testID="exercise-list">
                 {session.exercises.map((ex) => (
                   <View
@@ -293,11 +309,17 @@ const styles = StyleSheet.create({
     marginTop: 28,
     marginBottom: 4,
   },
+  sessionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
   sessionTitle: {
     fontSize: 34,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 24,
+    flex: 1,
   },
   exerciseRow: {
     flexDirection: 'row',

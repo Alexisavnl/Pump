@@ -15,10 +15,12 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 0, top: 0, left: 0, right: 0 }),
 }));
 jest.mock('../../../utils/storage/programs');
+jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('expo-router', () => {
   const React = require('react');
   return {
     useFocusEffect: (cb: () => void) => React.useEffect(cb, []),
+    router: { push: jest.fn() },
   };
 });
 
@@ -199,5 +201,28 @@ describe('AccueilScreen', () => {
 
     expect(screen.getByTestId('workout-done-button')).toBeTruthy();
     expect(screen.queryByTestId('start-workout-button')).toBeNull();
+  });
+
+  it('shows edit button when a session is displayed', () => {
+    const todayKey = makeTodayKey();
+    const program = makeProgram('p1', 'PPL', [todayKey]);
+    mockGetActiveProgram.mockReturnValue('p1');
+    mockGetProgram.mockReturnValue(program);
+    render(<AccueilScreen />);
+    expect(screen.getByTestId('edit-session-button')).toBeTruthy();
+  });
+
+  it('pressing edit button navigates to session editor with correct params', () => {
+    const { router } = jest.requireMock('expo-router') as { router: { push: jest.Mock } };
+    const todayKey = makeTodayKey();
+    const program = makeProgram('p1', 'PPL', [todayKey]);
+    mockGetActiveProgram.mockReturnValue('p1');
+    mockGetProgram.mockReturnValue(program);
+    render(<AccueilScreen />);
+
+    fireEvent.press(screen.getByTestId('edit-session-button'));
+    expect(router.push).toHaveBeenCalledWith(
+      expect.stringContaining(`/entrainement/program/session/new?day=${todayKey}`)
+    );
   });
 });
