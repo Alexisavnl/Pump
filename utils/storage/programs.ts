@@ -1,5 +1,5 @@
 import { createMMKV } from 'react-native-mmkv';
-import type { Program } from '../../types/program';
+import type { Program, ExerciseConfig } from '../../types/program';
 
 const storage = createMMKV({ id: 'programs-storage' });
 
@@ -8,9 +8,8 @@ const KEYS = {
   PROGRAM_PREFIX: 'program_',
   DRAFT: 'program_draft',
   ACTIVE_PROGRAM: 'active_program_id',
+  TEMP_EXERCISES: 'temp_exercises',
 } as const;
-
-// ─── Programs ────────────────────────────────────────────────────────────────
 
 export function saveProgram(program: Program): void {
   storage.set(KEYS.PROGRAM_PREFIX + program.id, JSON.stringify(program));
@@ -44,8 +43,6 @@ export function deleteProgram(id: string): void {
   }
 }
 
-// ─── Draft ───────────────────────────────────────────────────────────────────
-
 export function saveDraft(program: Partial<Program>): void {
   storage.set(KEYS.DRAFT, JSON.stringify(program));
 }
@@ -60,7 +57,19 @@ export function clearDraft(): void {
   storage.remove(KEYS.DRAFT);
 }
 
-// ─── Active Program ───────────────────────────────────────────────────────────
+export function saveTempExercises(exercises: ExerciseConfig[]): void {
+  storage.set(KEYS.TEMP_EXERCISES, JSON.stringify(exercises));
+}
+
+export function getTempExercises(): ExerciseConfig[] | null {
+  const raw = storage.getString(KEYS.TEMP_EXERCISES);
+  if (!raw) return null;
+  return JSON.parse(raw) as ExerciseConfig[];
+}
+
+export function clearTempExercises(): void {
+  storage.remove(KEYS.TEMP_EXERCISES);
+}
 
 export function setActiveProgram(id: string): void {
   storage.set(KEYS.ACTIVE_PROGRAM, id);
@@ -69,8 +78,6 @@ export function setActiveProgram(id: string): void {
 export function getActiveProgram(): string | null {
   return storage.getString(KEYS.ACTIVE_PROGRAM) ?? null;
 }
-
-// ─── Internal ─────────────────────────────────────────────────────────────────
 
 function getProgramsIndex(): string[] {
   const raw = storage.getString(KEYS.PROGRAMS_INDEX);
