@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useRef, useCallback } fro
 import type { ActiveWorkout, WorkoutExercise, CompletedWorkout } from '../../types/workout';
 import { saveCompletedWorkout, saveExerciseHistory } from '../../utils/storage/workouts';
 import { markWorkoutDone } from '../../utils/storage/programs';
+import { initHealthKit, logWorkoutToHealthKit } from '../../utils/healthkit';
 
 // State
 
@@ -32,7 +33,13 @@ type WorkoutAction =
   | { type: 'HIDE' }
   | { type: 'DISCARD' }
   | { type: 'COMPLETE_SET'; exerciseId: string; setIndex: number }
-  | { type: 'UPDATE_SET'; exerciseId: string; setIndex: number; field: 'kg' | 'reps'; value: number }
+  | {
+      type: 'UPDATE_SET';
+      exerciseId: string;
+      setIndex: number;
+      field: 'kg' | 'reps';
+      value: number;
+    }
   | { type: 'ADD_SET'; exerciseId: string }
   | { type: 'START_REST'; exerciseId: string; seconds: number }
   | { type: 'TICK_REST' }
@@ -58,9 +65,7 @@ function reducer(state: WorkoutState, action: WorkoutAction): WorkoutState {
       const exercises = state.active.exercises.map((ex) => {
         if (ex.exerciseId !== action.exerciseId) return ex;
         const sets = ex.sets.map((s, i) =>
-          i === action.setIndex
-            ? { ...s, completed: !s.completed, completedAt: Date.now() }
-            : s
+          i === action.setIndex ? { ...s, completed: !s.completed, completedAt: Date.now() } : s
         );
         return { ...ex, sets };
       });
@@ -184,8 +189,22 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     const current = stateRef.current.active;
     if (!current) return;
     const today = new Date().toISOString().slice(0, 10);
-    saveFinishedWorkout(current, today);
+    const completed = saveFinishedWorkout(current, today);
     dispatch({ type: 'DISCARD' });
+
+    // Log to Apple Health (fire and forget)
+    initHealthKit()
+      .then(() =>
+        logWorkoutToHealthKit({
+          startDate: new Date(completed.startedAt),
+          endDate: new Date(completed.completedAt),
+          durationSeconds: completed.durationSeconds,
+          totalVolume: completed.totalVolume,
+        })
+      )
+      .catch(() => {
+        // HealthKit unavailable or permission denied — silent fail
+      });
   }, [clearTimer]);
 
   const completeSet = useCallback(
@@ -248,7 +267,18 @@ export function useWorkout(): WorkoutContextValue {
 
 // Helper to build ActiveWorkout from a session
 export function buildActiveWorkout(
-  session: { id: string; title: string; exercises: { exerciseId: string; exerciseName: string; imageUrl: string; notes: string; restTime: number | null; sets: { serieNumber: number; kg: number; reps: number | { min: number; max: number } }[] }[] },
+  session: {
+    id: string;
+    title: string;
+    exercises: {
+      exerciseId: string;
+      exerciseName: string;
+      imageUrl: string;
+      notes: string;
+      restTime: number | null;
+      sets: { serieNumber: number; kg: number; reps: number | { min: number; max: number } }[];
+    }[];
+  },
   programId: string,
   getHistory: (exerciseId: string) => { sets: { kg: number; reps: number }[] } | null
 ): ActiveWorkout {
@@ -281,10 +311,7 @@ export function buildActiveWorkout(
 }
 
 // Helper to compute finished workout stats and save
-export function saveFinishedWorkout(
-  active: ActiveWorkout,
-  dateKey: string
-): CompletedWorkout {
+export function saveFinishedWorkout(active: ActiveWorkout, dateKey: string): CompletedWorkout {
   const now = Date.now();
   const durationSeconds = Math.round((now - active.startedAt) / 1000);
   const completedSets = active.exercises.flatMap((ex) => ex.sets.filter((s) => s.completed));

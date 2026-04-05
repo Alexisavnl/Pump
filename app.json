@@ -21,7 +21,15 @@
         "resizeMode": "contain",
         "backgroundColor": "#282828"
       },
-      "generateSplashScreens": true
+      "generateSplashScreens": true,
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "Pump utilise HealthKit pour lire vos données de santé et afficher vos statistiques d'entraînement.",
+        "NSHealthUpdateUsageDescription": "Pump enregistre vos séances de musculation dans Apple Santé."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
+      }
     },
     "android": {
       "adaptiveIcon": {
