@@ -7,7 +7,7 @@ export interface Set {
 export interface ExerciseConfig {
   exerciseId: string;
   exerciseName: string;
-  imagePath: string;
+  imageUrl: string;
   notes: string;
   restTime: number | null;
   repType: 'fixed' | 'range';

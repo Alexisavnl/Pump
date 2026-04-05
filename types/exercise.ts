@@ -1,20 +1,54 @@
 export type MuscleGroup =
   | 'Chest'
-  | 'Back'
   | 'Shoulders'
   | 'Biceps'
   | 'Triceps'
   | 'Forearms'
   | 'Quadriceps'
   | 'Hamstrings'
-  | 'Glutes'
   | 'Calves'
+  | 'Glutes'
+  | 'Abductors'
+  | 'Adductors'
+  | 'Lats'
+  | 'Upper Back'
+  | 'Traps'
+  | 'Lower Back'
   | 'Abs'
-  | 'Cardio';
+  | 'Cardio'
+  | 'Neck'
+  | 'Full Body';
+
+export type Equipment =
+  | 'Barbell'
+  | 'Dumbbell'
+  | 'Cable'
+  | 'Machine'
+  | 'Bodyweight'
+  | 'Kettlebell'
+  | 'Band'
+  | 'Medicine Ball'
+  | 'Plate'
+  | 'Smith Machine'
+  | 'Other';
+
+export type ExerciseType =
+  | 'Weight & Reps'
+  | 'Reps Only'
+  | 'Weighted Bodyweight'
+  | 'Assisted Bodyweight'
+  | 'Duration'
+  | 'Weight & Duration'
+  | 'Distance & Duration'
+  | 'Weight & Distance';
 
 export interface Exercise {
   id: string;
-  name: string;
-  muscleGroup: MuscleGroup;
-  imagePath: string;
+  nameEn: string;
+  nameFr: string;
+  primaryMuscleGroup: MuscleGroup;
+  secondaryMuscleGroups: MuscleGroup[];
+  equipment: Equipment;
+  exerciseType: ExerciseType;
+  imageUrl: string;
 }
