@@ -1,22 +1,327 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
+import { useState, useCallback } from 'react';
+import { getActiveProgram, getProgram } from '../../utils/storage/programs';
+import exerciseImages from '../../data/exerciseImages';
+import type { Program, DayKey, ExerciseConfig } from '../../types/program';
+
+const DAYS: DayKey[] = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
+
+const DAY_LABELS: Record<DayKey, string> = {
+  LUN: 'Lundi',
+  MAR: 'Mardi',
+  MER: 'Mercredi',
+  JEU: 'Jeudi',
+  VEN: 'Vendredi',
+  SAM: 'Samedi',
+  DIM: 'Dimanche',
+};
+
+type DayCircleState = 'today' | 'has-session' | 'rest';
+
+function getTodayKey(): DayKey {
+  return (['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'] as DayKey[])[new Date().getDay()];
+}
+
+function getCurrentWeekDays(): { key: DayKey; date: Date }[] {
+  const today = new Date();
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  return DAYS.map((key, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return { key, date: d };
+  });
+}
+
+function getDayCircleState(date: Date, todayDate: Date, hasSession: boolean): DayCircleState {
+  if (date.toDateString() === todayDate.toDateString()) return 'today';
+  if (hasSession) return 'has-session';
+  return 'rest';
+}
+
+function formatSets(exercise: ExerciseConfig): string {
+  const count = exercise.sets.length;
+  const reps = exercise.sets[0]?.reps;
+  const label = count === 1 ? 'série' : 'séries';
+  if (typeof reps === 'number' && reps > 0) return `${count} ${label} · ${reps} reps`;
+  if (typeof reps === 'object') return `${count} ${label} · ${reps.min}–${reps.max} reps`;
+  return `${count} ${label}`;
+}
 
 export default function AccueilScreen() {
+  const { bottom } = useSafeAreaInsets();
+  const todayKey = getTodayKey();
+  const [selectedDay, setSelectedDay] = useState<DayKey>(todayKey);
+  const [activeProgram, setActiveProgram] = useState<Program | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const id = getActiveProgram();
+      setActiveProgram(id ? (getProgram(id) ?? null) : null);
+    }, [])
+  );
+
+  const weekDays = getCurrentWeekDays();
+  const today = new Date();
+  const session = activeProgram?.days[selectedDay]?.[0] ?? null;
+  const isToday = selectedDay === todayKey;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Accueil</Text>
-    </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 100 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Planning</Text>
+
+        <View style={styles.weekRow}>
+          {weekDays.map(({ key, date }) => {
+            const hasSession = (activeProgram?.days[key]?.length ?? 0) > 0;
+            const circleState = getDayCircleState(date, today, hasSession);
+            const isSelected = key === selectedDay;
+
+            return (
+              <TouchableOpacity
+                key={key}
+                onPress={() => setSelectedDay(key)}
+                style={styles.dayColumn}
+                testID={circleState === 'today' ? 'day-pill-today' : `day-pill-${key}`}
+              >
+                <Text style={styles.dayName}>{DAY_LABELS[key].slice(0, 3)}</Text>
+                <View
+                  style={[
+                    styles.dayCircle,
+                    isSelected && styles.dayCircleSelected,
+                    !isSelected && circleState === 'today' && styles.dayCircleToday,
+                    !isSelected && circleState === 'has-session' && styles.dayCircleSession,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dayNumber,
+                      isSelected && styles.dayNumberSelected,
+                      !isSelected && circleState === 'today' && styles.dayNumberToday,
+                    ]}
+                  >
+                    {date.getDate()}
+                  </Text>
+                </View>
+                {circleState === 'today' && (
+                  <View style={styles.todayDot} testID={`session-dot-${key}`} />
+                )}
+                {circleState !== 'today' && hasSession && (
+                  <View style={styles.sessionDot} testID={`session-dot-${key}`} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {activeProgram ? (
+          session ? (
+            <View>
+              <Text style={styles.dayLabel} testID="day-label">
+                {isToday ? "Aujourd'hui" : DAY_LABELS[selectedDay]}
+              </Text>
+              <Text style={styles.sessionTitle} testID="session-title">
+                {session.title}
+              </Text>
+              <View testID="exercise-list">
+                {session.exercises.map((ex) => (
+                  <View
+                    key={ex.exerciseId}
+                    style={styles.exerciseRow}
+                    testID={`exercise-row-${ex.exerciseId}`}
+                  >
+                    <Image source={exerciseImages[ex.imageUrl]} style={styles.exerciseImage} />
+                    <View style={styles.exerciseInfo}>
+                      <Text style={styles.exerciseName}>{ex.exerciseName}</Text>
+                      <Text style={styles.exerciseSets}>{formatSets(ex)}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.emptyState} testID="no-session-state">
+              <Text style={styles.emptyTitle}>Repos</Text>
+              <Text style={styles.emptySubtitle}>Aucune séance prévue ce jour</Text>
+            </View>
+          )
+        ) : (
+          <View style={styles.emptyState} testID="no-program-state">
+            <Text style={styles.emptyTitle}>Aucun programme actif</Text>
+            <Text style={styles.emptySubtitle}>Crée un programme dans l'onglet Entraînement</Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {session && isToday && (
+        <View style={[styles.ctaContainer, { paddingBottom: bottom + 60 }]}>
+          <TouchableOpacity
+            style={styles.ctaButton}
+            activeOpacity={0.85}
+            testID="start-workout-button"
+          >
+            <Text style={styles.ctaText}>Démarrer l'entraînement</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#333333',
+    backgroundColor: '#1C1C1E',
   },
-  text: {
-    color: '#FFFFFF',
-    fontSize: 24,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  dayColumn: {
+    alignItems: 'center',
+    gap: 5,
+  },
+  dayName: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#8E8E93',
+    marginBottom: 2,
+  },
+  dayCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayCircleSelected: {
+    backgroundColor: '#0070D4',
+  },
+  dayCircleToday: {
+    borderWidth: 1.5,
+    borderColor: '#ffffff',
+  },
+  dayCircleSession: {
+    backgroundColor: '#3C3C3E',
+  },
+  dayNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  dayNumberSelected: {
+    color: '#ffffff',
+  },
+  dayNumberToday: {
+    color: '#ffffff',
+  },
+  todayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#0070D4',
+  },
+  sessionDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#3C3C3E',
+  },
+  dayLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginTop: 28,
+    marginBottom: 4,
+  },
+  sessionTitle: {
+    fontSize: 34,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 24,
+  },
+  exerciseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2C2C2E',
+  },
+  exerciseImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: '#2C2C2E',
+    marginRight: 14,
+  },
+  exerciseInfo: {
+    flex: 1,
+  },
+  exerciseName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 3,
+  },
+  exerciseSets: {
+    fontSize: 13,
+    color: '#8E8E93',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingTop: 80,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  ctaContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  ctaButton: {
+    backgroundColor: '#0070D4',
+    borderRadius: 9999,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  ctaText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
