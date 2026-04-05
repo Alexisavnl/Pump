@@ -1,7 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import AccueilScreen from '../accueil';
-import { getActiveProgram, getProgram } from '../../../utils/storage/programs';
+import {
+  getActiveProgram,
+  getProgram,
+  isWorkoutDone,
+  markWorkoutDone,
+} from '../../../utils/storage/programs';
 import type { Program } from '../../../types/program';
 
 jest.mock('react-native-mmkv');
@@ -19,6 +24,8 @@ jest.mock('expo-router', () => {
 
 const mockGetActiveProgram = getActiveProgram as jest.MockedFunction<typeof getActiveProgram>;
 const mockGetProgram = getProgram as jest.MockedFunction<typeof getProgram>;
+const mockIsWorkoutDone = isWorkoutDone as jest.MockedFunction<typeof isWorkoutDone>;
+const mockMarkWorkoutDone = markWorkoutDone as jest.MockedFunction<typeof markWorkoutDone>;
 
 function makeTodayKey(): string {
   return ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'][new Date().getDay()];
@@ -71,6 +78,8 @@ describe('AccueilScreen', () => {
     jest.clearAllMocks();
     mockGetActiveProgram.mockReturnValue(null);
     mockGetProgram.mockReturnValue(null);
+    mockIsWorkoutDone.mockReturnValue(false);
+    mockMarkWorkoutDone.mockImplementation(() => {});
   });
 
   it('renders "Planning" title', () => {
@@ -164,6 +173,31 @@ describe('AccueilScreen', () => {
     render(<AccueilScreen />);
 
     fireEvent.press(screen.getByTestId(`day-pill-${targetDay}`));
+    expect(screen.queryByTestId('start-workout-button')).toBeNull();
+  });
+
+  it('pressing CTA calls markWorkoutDone and shows done state', () => {
+    const todayKey = makeTodayKey();
+    const program = makeProgram('p1', 'PPL', [todayKey]);
+    mockGetActiveProgram.mockReturnValue('p1');
+    mockGetProgram.mockReturnValue(program);
+    render(<AccueilScreen />);
+
+    fireEvent.press(screen.getByTestId('start-workout-button'));
+    expect(mockMarkWorkoutDone).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('workout-done-button')).toBeTruthy();
+    expect(screen.queryByTestId('start-workout-button')).toBeNull();
+  });
+
+  it('shows done state immediately when today workout is already done', () => {
+    const todayKey = makeTodayKey();
+    const program = makeProgram('p1', 'PPL', [todayKey]);
+    mockGetActiveProgram.mockReturnValue('p1');
+    mockGetProgram.mockReturnValue(program);
+    mockIsWorkoutDone.mockReturnValue(true);
+    render(<AccueilScreen />);
+
+    expect(screen.getByTestId('workout-done-button')).toBeTruthy();
     expect(screen.queryByTestId('start-workout-button')).toBeNull();
   });
 });

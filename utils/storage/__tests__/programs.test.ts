@@ -8,6 +8,9 @@ import {
   clearDraft,
   setActiveProgram,
   getActiveProgram,
+  markWorkoutDone,
+  isWorkoutDone,
+  getCompletedWorkouts,
 } from '../programs';
 import { clearAllMMKVInstances } from 'react-native-mmkv';
 import type { Program } from '../../../types/program';
@@ -113,6 +116,33 @@ describe('Programs storage', () => {
 
     it('returns null when no active program is set', () => {
       expect(getActiveProgram()).toBeNull();
+    });
+  });
+
+  describe('completed workouts', () => {
+    it('returns empty array when no workouts done', () => {
+      expect(getCompletedWorkouts()).toEqual([]);
+    });
+
+    it('marks a workout as done', () => {
+      markWorkoutDone('2026-04-05');
+      expect(isWorkoutDone('2026-04-05')).toBe(true);
+    });
+
+    it('returns false for undone workout', () => {
+      expect(isWorkoutDone('2026-04-05')).toBe(false);
+    });
+
+    it('does not duplicate a date marked twice', () => {
+      markWorkoutDone('2026-04-05');
+      markWorkoutDone('2026-04-05');
+      expect(getCompletedWorkouts()).toHaveLength(1);
+    });
+
+    it('stores multiple distinct dates', () => {
+      markWorkoutDone('2026-04-05');
+      markWorkoutDone('2026-04-06');
+      expect(getCompletedWorkouts()).toHaveLength(2);
     });
   });
 });

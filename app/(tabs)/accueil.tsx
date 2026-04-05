@@ -2,7 +2,12 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'rea
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
-import { getActiveProgram, getProgram } from '../../utils/storage/programs';
+import {
+  getActiveProgram,
+  getProgram,
+  markWorkoutDone,
+  isWorkoutDone,
+} from '../../utils/storage/programs';
 import exerciseImages from '../../data/exerciseImages';
 import type { Program, DayKey, ExerciseConfig } from '../../types/program';
 
@@ -18,7 +23,11 @@ const DAY_LABELS: Record<DayKey, string> = {
   DIM: 'Dimanche',
 };
 
-type DayCircleState = 'today' | 'missed' | 'has-session' | 'rest';
+type DayCircleState = 'today' | 'completed' | 'missed' | 'has-session' | 'rest';
+
+function toDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
 
 function getTodayKey(): DayKey {
   return (['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'] as DayKey[])[new Date().getDay()];
@@ -36,10 +45,16 @@ function getCurrentWeekDays(): { key: DayKey; date: Date }[] {
   });
 }
 
-function getDayCircleState(date: Date, todayDate: Date, hasSession: boolean): DayCircleState {
+function getDayCircleState(
+  date: Date,
+  todayDate: Date,
+  hasSession: boolean,
+  completed: boolean
+): DayCircleState {
   const isToday = date.toDateString() === todayDate.toDateString();
   if (isToday) return 'today';
   if (hasSession) {
+    if (completed) return 'completed';
     const isPast = date < todayDate;
     return isPast ? 'missed' : 'has-session';
   }
@@ -60,16 +75,20 @@ export default function AccueilScreen() {
   const todayKey = getTodayKey();
   const [selectedDay, setSelectedDay] = useState<DayKey>(todayKey);
   const [activeProgram, setActiveProgram] = useState<Program | null>(null);
+  const [todayDone, setTodayDone] = useState(false);
+
+  const today = new Date();
+  const todayDateKey = toDateKey(today);
 
   useFocusEffect(
     useCallback(() => {
       const id = getActiveProgram();
       setActiveProgram(id ? (getProgram(id) ?? null) : null);
-    }, [])
+      setTodayDone(isWorkoutDone(todayDateKey));
+    }, [todayDateKey])
   );
 
   const weekDays = getCurrentWeekDays();
-  const today = new Date();
   const session = activeProgram?.days[selectedDay]?.[0] ?? null;
   const isToday = selectedDay === todayKey;
 
@@ -85,7 +104,8 @@ export default function AccueilScreen() {
         <View style={styles.weekRow}>
           {weekDays.map(({ key, date }) => {
             const hasSession = (activeProgram?.days[key]?.length ?? 0) > 0;
-            const circleState = getDayCircleState(date, today, hasSession);
+            const completed = isWorkoutDone(toDateKey(date));
+            const circleState = getDayCircleState(date, today, hasSession, completed);
             const isSelected = key === selectedDay;
 
             return (
@@ -104,6 +124,7 @@ export default function AccueilScreen() {
                     circleState === 'today' && styles.dayCircleToday,
                     circleState === 'has-session' && styles.dayCircleSession,
                     circleState === 'missed' && styles.dayCircleMissed,
+                    circleState === 'completed' && styles.dayCircleCompleted,
                   ]}
                 >
                   <Text
@@ -112,6 +133,7 @@ export default function AccueilScreen() {
                       circleState === 'today' && styles.dayNumberToday,
                       circleState === 'missed' && styles.dayNumberMissed,
                       circleState === 'has-session' && styles.dayNumberSession,
+                      circleState === 'completed' && styles.dayNumberSession,
                     ]}
                   >
                     {date.getDate()}
@@ -163,13 +185,23 @@ export default function AccueilScreen() {
 
       {session && isToday && (
         <View style={[styles.ctaContainer, { paddingBottom: bottom + 60 }]}>
-          <TouchableOpacity
-            style={styles.ctaButton}
-            activeOpacity={0.85}
-            testID="start-workout-button"
-          >
-            <Text style={styles.ctaText}>Démarrer l'entraînement</Text>
-          </TouchableOpacity>
+          {todayDone ? (
+            <View style={styles.ctaButtonDone} testID="workout-done-button">
+              <Text style={styles.ctaText}>Séance terminée ✓</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.ctaButton}
+              activeOpacity={0.85}
+              testID="start-workout-button"
+              onPress={() => {
+                markWorkoutDone(todayDateKey);
+                setTodayDone(true);
+              }}
+            >
+              <Text style={styles.ctaText}>Démarrer l'entraînement</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </SafeAreaView>
@@ -236,6 +268,9 @@ const styles = StyleSheet.create({
   dayCircleMissed: {
     borderWidth: 1.5,
     borderColor: '#FF453A',
+  },
+  dayCircleCompleted: {
+    backgroundColor: '#0070D4',
   },
   dayNumber: {
     fontSize: 14,
@@ -317,6 +352,12 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     backgroundColor: '#0070D4',
+    borderRadius: 9999,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  ctaButtonDone: {
+    backgroundColor: '#2C2C2E',
     borderRadius: 9999,
     paddingVertical: 16,
     alignItems: 'center',
