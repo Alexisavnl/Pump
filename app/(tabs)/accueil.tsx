@@ -6,10 +6,11 @@ import { useState, useCallback, useRef } from 'react';
 import {
   getActiveProgram,
   getProgram,
-  markWorkoutDone,
   isWorkoutDone,
   saveDraft,
 } from '../../utils/storage/programs';
+import { getExerciseHistory } from '../../utils/storage/workouts';
+import { useWorkout, buildActiveWorkout } from '../../src/context/WorkoutContext';
 import exerciseImages from '../../data/exerciseImages';
 import type { Program, DayKey, ExerciseConfig } from '../../types/program';
 
@@ -79,6 +80,7 @@ function formatReps(reps: number | { min: number; max: number }): string {
 
 export default function AccueilScreen() {
   const { bottom } = useSafeAreaInsets();
+  const { startWorkout, state: workoutState } = useWorkout();
   const todayKey = getTodayKey();
   const [selectedDay, setSelectedDay] = useState<DayKey>(todayKey);
   const [activeProgram, setActiveProgram] = useState<Program | null>(null);
@@ -286,7 +288,21 @@ export default function AccueilScreen() {
 
       {session && isToday && (
         <View style={[styles.ctaContainer, { paddingBottom: bottom + 60 }]}>
-          {todayDone ? (
+          {workoutState.active ? (
+            <TouchableOpacity
+              style={styles.ctaButtonActive}
+              activeOpacity={0.85}
+              testID="resume-workout-button"
+              onPress={() =>
+                workoutState.active &&
+                !workoutState.isWorkoutVisible &&
+                startWorkout(workoutState.active)
+              }
+            >
+              <View style={styles.greenDot} />
+              <Text style={styles.ctaText}>Reprendre l'entraînement</Text>
+            </TouchableOpacity>
+          ) : todayDone ? (
             <View style={styles.ctaButtonDone} testID="workout-done-button">
               <Text style={styles.ctaText}>Séance terminée ✓</Text>
             </View>
@@ -296,8 +312,9 @@ export default function AccueilScreen() {
               activeOpacity={0.85}
               testID="start-workout-button"
               onPress={() => {
-                markWorkoutDone(todayDateKey);
-                setTodayDone(true);
+                if (!activeProgram) return;
+                const active = buildActiveWorkout(session, activeProgram.id, getExerciseHistory);
+                startWorkout(active);
               }}
             >
               <Text style={styles.ctaText}>Démarrer l'entraînement</Text>
@@ -517,6 +534,23 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     paddingVertical: 16,
     alignItems: 'center',
+  },
+  ctaButtonActive: {
+    backgroundColor: '#1C3A2A',
+    borderRadius: 9999,
+    paddingVertical: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#30D158',
+  },
+  greenDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#30D158',
   },
   ctaText: {
     color: '#ffffff',

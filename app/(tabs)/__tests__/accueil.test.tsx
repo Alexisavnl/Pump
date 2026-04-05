@@ -1,12 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import AccueilScreen from '../accueil';
-import {
-  getActiveProgram,
-  getProgram,
-  isWorkoutDone,
-  markWorkoutDone,
-} from '../../../utils/storage/programs';
+import { WorkoutProvider } from '../../../src/context/WorkoutContext';
+import { getActiveProgram, getProgram, isWorkoutDone } from '../../../utils/storage/programs';
 import type { Program } from '../../../types/program';
 
 jest.mock('react-native-mmkv');
@@ -15,6 +11,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 0, top: 0, left: 0, right: 0 }),
 }));
 jest.mock('../../../utils/storage/programs');
+jest.mock('../../../utils/storage/workouts');
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('expo-router', () => {
   const React = require('react');
@@ -24,10 +21,13 @@ jest.mock('expo-router', () => {
   };
 });
 
+function renderWithProvider(ui: React.ReactElement) {
+  return render(<WorkoutProvider>{ui}</WorkoutProvider>);
+}
+
 const mockGetActiveProgram = getActiveProgram as jest.MockedFunction<typeof getActiveProgram>;
 const mockGetProgram = getProgram as jest.MockedFunction<typeof getProgram>;
 const mockIsWorkoutDone = isWorkoutDone as jest.MockedFunction<typeof isWorkoutDone>;
-const mockMarkWorkoutDone = markWorkoutDone as jest.MockedFunction<typeof markWorkoutDone>;
 
 function makeTodayKey(): string {
   return ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'][new Date().getDay()];
@@ -81,16 +81,15 @@ describe('AccueilScreen', () => {
     mockGetActiveProgram.mockReturnValue(null);
     mockGetProgram.mockReturnValue(null);
     mockIsWorkoutDone.mockReturnValue(false);
-    mockMarkWorkoutDone.mockImplementation(() => {});
   });
 
   it('renders "Planning" title', () => {
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.getByText('Planning')).toBeTruthy();
   });
 
   it('renders all 7 day pills', () => {
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     const todayKey = makeTodayKey();
     const otherDays = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'].filter(
       (k) => k !== todayKey
@@ -102,12 +101,12 @@ describe('AccueilScreen', () => {
   });
 
   it("today's pill has day-pill-today testID", () => {
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.getByTestId('day-pill-today')).toBeTruthy();
   });
 
   it('shows no-program-state when no active program', () => {
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.getByTestId('no-program-state')).toBeTruthy();
   });
 
@@ -115,7 +114,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', []);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.getByTestId('no-session-state')).toBeTruthy();
   });
 
@@ -124,7 +123,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.getByTestId('session-title')).toBeTruthy();
     expect(screen.getByTestId('exercise-list')).toBeTruthy();
     expect(screen.getByTestId('exercise-row-ex1')).toBeTruthy();
@@ -139,7 +138,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [targetDay]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
 
     expect(screen.getByTestId('no-session-state')).toBeTruthy();
     fireEvent.press(screen.getByTestId(`day-pill-${targetDay}`));
@@ -151,7 +150,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.getByTestId('start-workout-button')).toBeTruthy();
   });
 
@@ -159,7 +158,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', []);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.queryByTestId('start-workout-button')).toBeNull();
   });
 
@@ -172,23 +171,21 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [targetDay]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
 
     fireEvent.press(screen.getByTestId(`day-pill-${targetDay}`));
     expect(screen.queryByTestId('start-workout-button')).toBeNull();
   });
 
-  it('pressing CTA calls markWorkoutDone and shows done state', () => {
+  it('pressing CTA starts the workout', () => {
     const todayKey = makeTodayKey();
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
 
     fireEvent.press(screen.getByTestId('start-workout-button'));
-    expect(mockMarkWorkoutDone).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('workout-done-button')).toBeTruthy();
-    expect(screen.queryByTestId('start-workout-button')).toBeNull();
+    expect(screen.getByTestId('resume-workout-button')).toBeTruthy();
   });
 
   it('shows done state immediately when today workout is already done', () => {
@@ -197,7 +194,7 @@ describe('AccueilScreen', () => {
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
     mockIsWorkoutDone.mockReturnValue(true);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
 
     expect(screen.getByTestId('workout-done-button')).toBeTruthy();
     expect(screen.queryByTestId('start-workout-button')).toBeNull();
@@ -208,7 +205,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.getByTestId('edit-session-button')).toBeTruthy();
   });
 
@@ -217,7 +214,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
     expect(screen.queryByTestId('exercise-expanded-ex1')).toBeNull();
   });
 
@@ -226,7 +223,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
 
     fireEvent.press(screen.getByTestId('exercise-toggle-ex1'));
     expect(screen.getByTestId('exercise-expanded-ex1')).toBeTruthy();
@@ -237,7 +234,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
 
     fireEvent.press(screen.getByTestId('exercise-toggle-ex1'));
     fireEvent.press(screen.getByTestId('exercise-toggle-ex1'));
@@ -250,7 +247,7 @@ describe('AccueilScreen', () => {
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
     mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
+    renderWithProvider(<AccueilScreen />);
 
     fireEvent.press(screen.getByTestId('edit-session-button'));
     expect(router.push).toHaveBeenCalledWith(
