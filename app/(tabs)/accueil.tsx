@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'rea
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   getActiveProgram,
   getProgram,
@@ -72,6 +72,11 @@ function formatSets(exercise: ExerciseConfig): string {
   return `${count} ${label}`;
 }
 
+function formatReps(reps: number | { min: number; max: number }): string {
+  if (typeof reps === 'object') return `${reps.min}–${reps.max}`;
+  return String(reps);
+}
+
 export default function AccueilScreen() {
   const { bottom } = useSafeAreaInsets();
   const todayKey = getTodayKey();
@@ -93,6 +98,13 @@ export default function AccueilScreen() {
   const weekDays = getCurrentWeekDays();
   const session = activeProgram?.days[selectedDay]?.[0] ?? null;
   const isToday = selectedDay === todayKey;
+  const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
+  const prevSelectedDay = useRef(selectedDay);
+
+  if (prevSelectedDay.current !== selectedDay) {
+    prevSelectedDay.current = selectedDay;
+    if (expandedExerciseId !== null) setExpandedExerciseId(null);
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -170,19 +182,92 @@ export default function AccueilScreen() {
                 </TouchableOpacity>
               </View>
               <View testID="exercise-list">
-                {session.exercises.map((ex) => (
-                  <View
-                    key={ex.exerciseId}
-                    style={styles.exerciseRow}
-                    testID={`exercise-row-${ex.exerciseId}`}
-                  >
-                    <Image source={exerciseImages[ex.imageUrl]} style={styles.exerciseImage} />
-                    <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseName}>{ex.exerciseName}</Text>
-                      <Text style={styles.exerciseSets}>{formatSets(ex)}</Text>
+                {session.exercises.map((ex) => {
+                  const isExpanded = expandedExerciseId === ex.exerciseId;
+                  return (
+                    <View
+                      key={ex.exerciseId}
+                      style={styles.exerciseCard}
+                      testID={`exercise-row-${ex.exerciseId}`}
+                    >
+                      <TouchableOpacity
+                        style={styles.exerciseCardHeader}
+                        onPress={() => setExpandedExerciseId(isExpanded ? null : ex.exerciseId)}
+                        activeOpacity={0.7}
+                        testID={`exercise-toggle-${ex.exerciseId}`}
+                      >
+                        <Image source={exerciseImages[ex.imageUrl]} style={styles.exerciseImage} />
+                        <View style={styles.exerciseInfo}>
+                          <Text style={styles.exerciseName}>{ex.exerciseName}</Text>
+                          <Text style={styles.exerciseSets}>{formatSets(ex)}</Text>
+                        </View>
+                        <Ionicons
+                          name={isExpanded ? 'chevron-down' : 'chevron-forward'}
+                          size={16}
+                          color="#6C6C70"
+                        />
+                      </TouchableOpacity>
+
+                      {isExpanded && (
+                        <View
+                          style={styles.exerciseExpanded}
+                          testID={`exercise-expanded-${ex.exerciseId}`}
+                        >
+                          <View style={styles.restRow}>
+                            <Ionicons name="timer-outline" size={14} color="#8E8E93" />
+                            <Text style={styles.restText}>
+                              {ex.restTime === null || ex.restTime === 0
+                                ? 'Repos : Désactivé'
+                                : `Repos : ${ex.restTime < 60 ? `${ex.restTime}s` : `${Math.floor(ex.restTime / 60)}min${ex.restTime % 60 > 0 ? ` ${ex.restTime % 60}s` : ''}`}`}
+                            </Text>
+                          </View>
+                          <View style={styles.setsTable}>
+                            <View style={styles.setRow}>
+                              <Text
+                                style={[styles.setCell, styles.setCellHeader, styles.setCellSerie]}
+                              >
+                                Série
+                              </Text>
+                              <Text
+                                style={[styles.setCell, styles.setCellHeader, styles.setCellKg]}
+                              >
+                                KG
+                              </Text>
+                              <Text
+                                style={[styles.setCell, styles.setCellHeader, styles.setCellReps]}
+                              >
+                                Réps
+                              </Text>
+                            </View>
+                            {ex.sets.map((set, idx) => (
+                              <View
+                                key={idx}
+                                style={styles.setRow}
+                                testID={`set-row-${ex.exerciseId}-${idx}`}
+                              >
+                                <Text style={[styles.setCell, styles.setCellSerie]}>
+                                  {set.serieNumber}
+                                </Text>
+                                <Text style={[styles.setCell, styles.setCellKg]}>{set.kg}</Text>
+                                <Text style={[styles.setCell, styles.setCellReps]}>
+                                  {formatReps(set.reps)}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
+                          {ex.notes ? (
+                            <Text
+                              style={styles.exerciseNotes}
+                              testID={`exercise-notes-${ex.exerciseId}`}
+                            >
+                              {ex.notes}
+                            </Text>
+                          ) : null}
+                        </View>
+                      )}
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             </View>
           ) : (
@@ -321,12 +406,13 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     flex: 1,
   },
-  exerciseRow: {
+  exerciseCard: {
+    marginBottom: 4,
+  },
+  exerciseCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
   },
   exerciseImage: {
     width: 52,
@@ -347,6 +433,54 @@ const styles = StyleSheet.create({
   exerciseSets: {
     fontSize: 13,
     color: '#8E8E93',
+  },
+  exerciseExpanded: {
+    paddingBottom: 12,
+  },
+  setsTable: {
+    gap: 6,
+  },
+  setRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  setCell: {
+    fontSize: 14,
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  setCellHeader: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#8E8E93',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  setCellSerie: {
+    width: 44,
+  },
+  setCellKg: {
+    flex: 1,
+  },
+  setCellReps: {
+    flex: 1,
+  },
+  restRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  restText: {
+    fontSize: 13,
+    color: '#8E8E93',
+  },
+  exerciseNotes: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#8E8E93',
+    fontStyle: 'italic',
   },
   emptyState: {
     alignItems: 'center',

@@ -212,6 +212,38 @@ describe('AccueilScreen', () => {
     expect(screen.getByTestId('edit-session-button')).toBeTruthy();
   });
 
+  it('exercises are collapsed by default', () => {
+    const todayKey = makeTodayKey();
+    const program = makeProgram('p1', 'PPL', [todayKey]);
+    mockGetActiveProgram.mockReturnValue('p1');
+    mockGetProgram.mockReturnValue(program);
+    render(<AccueilScreen />);
+    expect(screen.queryByTestId('exercise-expanded-ex1')).toBeNull();
+  });
+
+  it('tapping an exercise expands it', () => {
+    const todayKey = makeTodayKey();
+    const program = makeProgram('p1', 'PPL', [todayKey]);
+    mockGetActiveProgram.mockReturnValue('p1');
+    mockGetProgram.mockReturnValue(program);
+    render(<AccueilScreen />);
+
+    fireEvent.press(screen.getByTestId('exercise-toggle-ex1'));
+    expect(screen.getByTestId('exercise-expanded-ex1')).toBeTruthy();
+  });
+
+  it('tapping an expanded exercise collapses it', () => {
+    const todayKey = makeTodayKey();
+    const program = makeProgram('p1', 'PPL', [todayKey]);
+    mockGetActiveProgram.mockReturnValue('p1');
+    mockGetProgram.mockReturnValue(program);
+    render(<AccueilScreen />);
+
+    fireEvent.press(screen.getByTestId('exercise-toggle-ex1'));
+    fireEvent.press(screen.getByTestId('exercise-toggle-ex1'));
+    expect(screen.queryByTestId('exercise-expanded-ex1')).toBeNull();
+  });
+
   it('pressing edit button navigates to session editor with correct params', () => {
     const { router } = jest.requireMock('expo-router') as { router: { push: jest.Mock } };
     const todayKey = makeTodayKey();
