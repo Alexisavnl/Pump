@@ -18,7 +18,7 @@ const DAY_LABELS: Record<DayKey, string> = {
   DIM: 'Dimanche',
 };
 
-type DayCircleState = 'today' | 'has-session' | 'rest';
+type DayCircleState = 'today' | 'missed' | 'has-session' | 'rest';
 
 function getTodayKey(): DayKey {
   return (['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'] as DayKey[])[new Date().getDay()];
@@ -37,8 +37,12 @@ function getCurrentWeekDays(): { key: DayKey; date: Date }[] {
 }
 
 function getDayCircleState(date: Date, todayDate: Date, hasSession: boolean): DayCircleState {
-  if (date.toDateString() === todayDate.toDateString()) return 'today';
-  if (hasSession) return 'has-session';
+  const isToday = date.toDateString() === todayDate.toDateString();
+  if (isToday) return 'today';
+  if (hasSession) {
+    const isPast = date < todayDate;
+    return isPast ? 'missed' : 'has-session';
+  }
   return 'rest';
 }
 
@@ -88,34 +92,31 @@ export default function AccueilScreen() {
               <TouchableOpacity
                 key={key}
                 onPress={() => setSelectedDay(key)}
-                style={styles.dayColumn}
+                style={[styles.dayColumn, isSelected && styles.dayColumnSelected]}
                 testID={circleState === 'today' ? 'day-pill-today' : `day-pill-${key}`}
               >
-                <Text style={styles.dayName}>{DAY_LABELS[key].slice(0, 3)}</Text>
+                <Text style={[styles.dayName, isSelected && styles.dayNameSelected]}>
+                  {DAY_LABELS[key].slice(0, 3)}
+                </Text>
                 <View
                   style={[
                     styles.dayCircle,
-                    isSelected && styles.dayCircleSelected,
-                    !isSelected && circleState === 'today' && styles.dayCircleToday,
-                    !isSelected && circleState === 'has-session' && styles.dayCircleSession,
+                    circleState === 'today' && styles.dayCircleToday,
+                    circleState === 'has-session' && styles.dayCircleSession,
+                    circleState === 'missed' && styles.dayCircleMissed,
                   ]}
                 >
                   <Text
                     style={[
                       styles.dayNumber,
-                      isSelected && styles.dayNumberSelected,
-                      !isSelected && circleState === 'today' && styles.dayNumberToday,
+                      circleState === 'today' && styles.dayNumberToday,
+                      circleState === 'missed' && styles.dayNumberMissed,
+                      circleState === 'has-session' && styles.dayNumberSession,
                     ]}
                   >
                     {date.getDate()}
                   </Text>
                 </View>
-                {circleState === 'today' && (
-                  <View style={styles.todayDot} testID={`session-dot-${key}`} />
-                )}
-                {circleState !== 'today' && hasSession && (
-                  <View style={styles.sessionDot} testID={`session-dot-${key}`} />
-                )}
               </TouchableOpacity>
             );
           })}
@@ -201,13 +202,22 @@ const styles = StyleSheet.create({
   },
   dayColumn: {
     alignItems: 'center',
-    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    gap: 4,
+    minWidth: 36,
+  },
+  dayColumnSelected: {
+    backgroundColor: '#3C3C3E',
   },
   dayName: {
     fontSize: 11,
     fontWeight: '500',
     color: '#8E8E93',
-    marginBottom: 2,
+  },
+  dayNameSelected: {
+    color: '#ffffff',
   },
   dayCircle: {
     width: 36,
@@ -216,9 +226,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayCircleSelected: {
-    backgroundColor: '#0070D4',
-  },
   dayCircleToday: {
     borderWidth: 1.5,
     borderColor: '#ffffff',
@@ -226,28 +233,23 @@ const styles = StyleSheet.create({
   dayCircleSession: {
     backgroundColor: '#3C3C3E',
   },
+  dayCircleMissed: {
+    borderWidth: 1.5,
+    borderColor: '#FF453A',
+  },
   dayNumber: {
     fontSize: 14,
     fontWeight: '600',
     color: '#8E8E93',
   },
-  dayNumberSelected: {
-    color: '#ffffff',
-  },
   dayNumberToday: {
     color: '#ffffff',
   },
-  todayDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#0070D4',
+  dayNumberSession: {
+    color: '#ffffff',
   },
-  sessionDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#3C3C3E',
+  dayNumberMissed: {
+    color: '#FF453A',
   },
   dayLabel: {
     fontSize: 15,

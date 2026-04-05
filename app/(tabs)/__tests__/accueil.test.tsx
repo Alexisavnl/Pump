@@ -130,25 +130,9 @@ describe('AccueilScreen', () => {
     mockGetProgram.mockReturnValue(program);
     render(<AccueilScreen />);
 
-    // Initially today has no session
     expect(screen.getByTestId('no-session-state')).toBeTruthy();
-
-    // Tap the day with a session
     fireEvent.press(screen.getByTestId(`day-pill-${targetDay}`));
     expect(screen.getByTestId('session-title')).toBeTruthy();
-  });
-
-  it('shows session dot for days that have sessions', () => {
-    const todayKey = makeTodayKey();
-    const otherDays = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'].filter(
-      (k) => k !== todayKey
-    );
-    const targetDay = otherDays[0];
-    const program = makeProgram('p1', 'PPL', [targetDay]);
-    mockGetActiveProgram.mockReturnValue('p1');
-    mockGetProgram.mockReturnValue(program);
-    render(<AccueilScreen />);
-    expect(screen.getByTestId(`session-dot-${targetDay}`)).toBeTruthy();
   });
 
   it('shows CTA button only when today has a session', () => {
