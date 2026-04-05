@@ -11,8 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useState, useEffect } from 'react';
 import { useWorkout } from '../../src/context/WorkoutContext';
 import exerciseImages from '../../data/exerciseImages';
+import type { WorkoutSet } from '../../types/workout';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -32,6 +34,93 @@ function formatRestLabel(restTime: number | null): string {
   return formatDuration(restTime);
 }
 
+interface SetRowProps {
+  set: WorkoutSet;
+  idx: number;
+  exerciseId: string;
+  onUpdate: (field: 'kg' | 'reps', value: number) => void;
+  onComplete: () => void;
+}
+
+function SetRow({ set, idx, exerciseId, onUpdate, onComplete }: SetRowProps) {
+  const [kgText, setKgText] = useState(String(set.kg));
+  const [repsText, setRepsText] = useState(String(set.reps));
+
+  // Sync only when set index changes (new set added), not on every render
+  const setKey = `${exerciseId}-${idx}`;
+  const [lastKey, setLastKey] = useState(setKey);
+  if (lastKey !== setKey) {
+    setLastKey(setKey);
+    setKgText(String(set.kg));
+    setRepsText(String(set.reps));
+  }
+
+  return (
+    <View
+      style={[styles.setRow, set.completed && styles.setRowCompleted]}
+      testID={`set-row-${exerciseId}-${idx}`}
+    >
+      <Text style={[styles.setCell, styles.cellSerie, set.completed && styles.setCellDone]}>
+        {set.serieNumber}
+      </Text>
+      <Text style={[styles.setCell, styles.cellPrev, styles.setCellPrevValue]}>
+        {set.kg > 0 ? `${set.kg}kg x ${set.reps}` : '—'}
+      </Text>
+      <TextInput
+        style={[
+          styles.setCell,
+          styles.setCellInput,
+          styles.cellKg,
+          set.completed && styles.setCellInputDone,
+        ]}
+        value={kgText}
+        onChangeText={(v) => {
+          setKgText(v);
+          const num = parseFloat(v);
+          if (!isNaN(num)) onUpdate('kg', num);
+        }}
+        onBlur={() => {
+          const num = parseFloat(kgText);
+          const final = isNaN(num) ? 0 : num;
+          onUpdate('kg', final);
+          setKgText(String(final));
+        }}
+        keyboardType="numeric"
+        testID={`set-kg-${exerciseId}-${idx}`}
+      />
+      <TextInput
+        style={[
+          styles.setCell,
+          styles.setCellInput,
+          styles.cellReps,
+          set.completed && styles.setCellInputDone,
+        ]}
+        value={repsText}
+        onChangeText={(v) => {
+          setRepsText(v);
+          const num = parseFloat(v);
+          if (!isNaN(num)) onUpdate('reps', num);
+        }}
+        onBlur={() => {
+          const num = parseFloat(repsText);
+          const final = isNaN(num) ? 0 : num;
+          onUpdate('reps', final);
+          setRepsText(String(final));
+        }}
+        keyboardType="numeric"
+        testID={`set-reps-${exerciseId}-${idx}`}
+      />
+      <TouchableOpacity
+        style={[styles.cellCheck, styles.checkButton, set.completed && styles.checkButtonDone]}
+        onPress={onComplete}
+        testID={`set-check-${exerciseId}-${idx}`}
+      >
+        <Ionicons name="checkmark" size={16} color={set.completed ? '#ffffff' : '#6C6C70'} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function WorkoutScreen() {
   const { bottom, top } = useSafeAreaInsets();
   const {
@@ -47,9 +136,20 @@ export default function WorkoutScreen() {
   } = useWorkout();
   const { active, restTimer, isWorkoutVisible } = state;
 
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!active || !isWorkoutVisible) return;
+    setElapsed(Math.round((Date.now() - active.startedAt) / 1000));
+    const interval = setInterval(() => {
+      setElapsed(Math.round((Date.now() - active.startedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [active?.startedAt, isWorkoutVisible]);
+
   if (!active || !isWorkoutVisible) return null;
 
-  const elapsedSeconds = Math.round((Date.now() - active.startedAt) / 1000);
+  const elapsedSeconds = elapsed;
   const completedSets = active.exercises.flatMap((ex) => ex.sets.filter((s) => s.completed));
   const totalVolume = completedSets.reduce((sum, s) => sum + s.kg * s.reps, 0);
 
@@ -144,59 +244,14 @@ export default function WorkoutScreen() {
 
               {/* Sets */}
               {ex.sets.map((set, idx) => (
-                <View
+                <SetRow
                   key={idx}
-                  style={[styles.setRow, set.completed && styles.setRowCompleted]}
-                  testID={`set-row-${ex.exerciseId}-${idx}`}
-                >
-                  <Text
-                    style={[styles.setCell, styles.cellSerie, set.completed && styles.setCellDone]}
-                  >
-                    {set.serieNumber}
-                  </Text>
-                  <Text style={[styles.setCell, styles.cellPrev, styles.setCellPrevValue]}>
-                    {set.kg > 0 ? `${set.kg}kg x ${set.reps}` : '—'}
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.setCell,
-                      styles.setCellInput,
-                      styles.cellKg,
-                      set.completed && styles.setCellInputDone,
-                    ]}
-                    value={String(set.kg)}
-                    onChangeText={(v) => updateSet(ex.exerciseId, idx, 'kg', parseFloat(v) || 0)}
-                    keyboardType="numeric"
-                    testID={`set-kg-${ex.exerciseId}-${idx}`}
-                  />
-                  <TextInput
-                    style={[
-                      styles.setCell,
-                      styles.setCellInput,
-                      styles.cellReps,
-                      set.completed && styles.setCellInputDone,
-                    ]}
-                    value={String(set.reps)}
-                    onChangeText={(v) => updateSet(ex.exerciseId, idx, 'reps', parseFloat(v) || 0)}
-                    keyboardType="numeric"
-                    testID={`set-reps-${ex.exerciseId}-${idx}`}
-                  />
-                  <TouchableOpacity
-                    style={[
-                      styles.cellCheck,
-                      styles.checkButton,
-                      set.completed && styles.checkButtonDone,
-                    ]}
-                    onPress={() => completeSet(ex.exerciseId, idx, ex.restTime)}
-                    testID={`set-check-${ex.exerciseId}-${idx}`}
-                  >
-                    <Ionicons
-                      name="checkmark"
-                      size={16}
-                      color={set.completed ? '#ffffff' : '#6C6C70'}
-                    />
-                  </TouchableOpacity>
-                </View>
+                  set={set}
+                  idx={idx}
+                  exerciseId={ex.exerciseId}
+                  onUpdate={(field, value) => updateSet(ex.exerciseId, idx, field, value)}
+                  onComplete={() => completeSet(ex.exerciseId, idx, ex.restTime)}
+                />
               ))}
 
               {/* Add set */}
