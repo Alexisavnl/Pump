@@ -32,7 +32,6 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>Profil</Text>
 
-      {/* Avatar */}
       <View style={styles.avatarSection}>
         <View style={styles.avatar} testID="profile-avatar">
           <Text style={styles.avatarInitial}>{getInitials(user.email ?? '?')}</Text>
@@ -47,7 +46,6 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      {/* Sign out */}
       <TouchableOpacity
         style={styles.signOutButton}
         onPress={handleSignOut}

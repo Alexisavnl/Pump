@@ -8,7 +8,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   'auth/user-not-found': 'Email ou mot de passe incorrect',
   'auth/wrong-password': 'Email ou mot de passe incorrect',
   'auth/popup-closed-by-user': '',
-  'auth/cancelled': '',
 };
 
 export function getAuthErrorMessage(code: string): string {

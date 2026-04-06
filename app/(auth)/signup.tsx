@@ -54,21 +54,10 @@ export default function SignupScreen() {
     }
   };
 
-  const handleGoogle = async () => {
+  const handleSocialAuth = async (fn: () => Promise<void>) => {
     setError('');
     try {
-      await signInWithGoogle();
-    } catch (e: unknown) {
-      const code = (e as { code?: string }).code ?? '';
-      const message = getAuthErrorMessage(code);
-      if (message) setError(message);
-    }
-  };
-
-  const handleApple = async () => {
-    setError('');
-    try {
-      await signInWithApple();
+      await fn();
     } catch (e: unknown) {
       const code = (e as { code?: string }).code ?? '';
       const message = getAuthErrorMessage(code);
@@ -87,7 +76,6 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
@@ -101,7 +89,6 @@ export default function SignupScreen() {
             <Text style={styles.subtitle}>Commence ton suivi d'entraînement</Text>
           </View>
 
-          {/* Fields */}
           <View style={styles.fields}>
             <View style={styles.inputWrapper}>
               <Ionicons name="mail-outline" size={18} color="#6C6C70" style={styles.inputIcon} />
@@ -185,7 +172,6 @@ export default function SignupScreen() {
             ) : null}
           </View>
 
-          {/* Primary CTA */}
           <TouchableOpacity
             style={[styles.primaryButton, isSubmitting && styles.primaryButtonDisabled]}
             onPress={handleSignUp}
@@ -199,26 +185,24 @@ export default function SignupScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Divider */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>ou</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social buttons */}
           <View style={styles.socialRow}>
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
               buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
               cornerRadius={12}
               style={styles.appleButton}
-              onPress={handleApple}
+              onPress={() => handleSocialAuth(signInWithApple)}
               testID="signup-apple-button"
             />
             <TouchableOpacity
               style={styles.socialButton}
-              onPress={handleGoogle}
+              onPress={() => handleSocialAuth(signInWithGoogle)}
               testID="signup-google-button"
             >
               <Ionicons name="logo-google" size={20} color="#ffffff" />
@@ -226,7 +210,6 @@ export default function SignupScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Déjà un compte ? </Text>
             <TouchableOpacity onPress={() => router.back()} testID="signup-login-link">

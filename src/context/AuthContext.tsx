@@ -55,16 +55,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithApple = async (): Promise<void> => {
-    const credential = await AppleAuthentication.signInAsync({
-      requestedScopes: [
-        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-        AppleAuthentication.AppleAuthenticationScope.EMAIL,
-      ],
-    });
-    const { identityToken } = credential;
-    if (!identityToken) throw new Error('auth/cancelled');
-    const appleCredential = auth.OAuthProvider.credential('apple.com', identityToken);
-    await auth().signInWithCredential(appleCredential);
+    let appleResult: Awaited<ReturnType<typeof AppleAuthentication.signInAsync>>;
+    try {
+      appleResult = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+    } catch (error: unknown) {
+      if ((error as { code?: string }).code === 'ERR_CANCELED') return;
+      throw error;
+    }
+    if (!appleResult.identityToken) return;
+    const credential = auth.OAuthProvider.credential('apple.com', appleResult.identityToken);
+    await auth().signInWithCredential(credential);
   };
 
   const signOut = async (): Promise<void> => {

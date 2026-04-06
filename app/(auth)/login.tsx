@@ -41,21 +41,10 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogle = async () => {
+  const handleSocialAuth = async (fn: () => Promise<void>) => {
     setError('');
     try {
-      await signInWithGoogle();
-    } catch (e: unknown) {
-      const code = (e as { code?: string }).code ?? '';
-      const message = getAuthErrorMessage(code);
-      if (message) setError(message);
-    }
-  };
-
-  const handleApple = async () => {
-    setError('');
-    try {
-      await signInWithApple();
+      await fn();
     } catch (e: unknown) {
       const code = (e as { code?: string }).code ?? '';
       const message = getAuthErrorMessage(code);
@@ -69,7 +58,6 @@ export default function LoginScreen() {
         style={styles.inner}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Logo */}
         <View style={styles.logoContainer}>
           <Image
             source={require('../../assets/icon.png')}
@@ -78,13 +66,11 @@ export default function LoginScreen() {
           />
         </View>
 
-        {/* Title */}
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Bon retour</Text>
           <Text style={styles.subtitle}>Connecte-toi pour continuer</Text>
         </View>
 
-        {/* Fields */}
         <View style={styles.fields}>
           <View style={styles.inputWrapper}>
             <Ionicons name="mail-outline" size={18} color="#6C6C70" style={styles.inputIcon} />
@@ -138,7 +124,6 @@ export default function LoginScreen() {
           ) : null}
         </View>
 
-        {/* Primary CTA */}
         <TouchableOpacity
           style={[styles.primaryButton, isSubmitting && styles.primaryButtonDisabled]}
           onPress={handleSignIn}
@@ -152,26 +137,24 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Divider */}
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>ou</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Social buttons */}
         <View style={styles.socialRow}>
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
             cornerRadius={12}
             style={styles.appleButton}
-            onPress={handleApple}
+            onPress={() => handleSocialAuth(signInWithApple)}
             testID="login-apple-button"
           />
           <TouchableOpacity
             style={styles.socialButton}
-            onPress={handleGoogle}
+            onPress={() => handleSocialAuth(signInWithGoogle)}
             testID="login-google-button"
           >
             <Ionicons name="logo-google" size={20} color="#ffffff" />
@@ -179,7 +162,6 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Pas encore de compte ? </Text>
           <TouchableOpacity
