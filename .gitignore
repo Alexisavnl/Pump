@@ -44,3 +44,8 @@ yarn-error.*
 .claude/
 tasks/
 interfaces/
+.agents/
+CLAUDE.md
+
+/videos
+/images

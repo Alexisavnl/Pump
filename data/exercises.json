@@ -1,0 +1,52 @@
+[
+  {
+    "id": "barbell-bench-press",
+    "nameEn": "Barbell Bench Press",
+    "nameFr": "Développé couché à la barre",
+    "primaryMuscleGroup": "Chest",
+    "secondaryMuscleGroups": ["Shoulders", "Triceps"],
+    "equipment": "Barbell",
+    "exerciseType": "Weight & Reps",
+    "imageUrl": "Barbell-Bench-Press_Chest_thumbnail.jpg"
+  },
+  {
+    "id": "barbell-bent-over-row",
+    "nameEn": "Barbell Bent Over Row",
+    "nameFr": "Rowing barre en pronation",
+    "primaryMuscleGroup": "Lats",
+    "secondaryMuscleGroups": ["Upper Back", "Biceps"],
+    "equipment": "Barbell",
+    "exerciseType": "Weight & Reps",
+    "imageUrl": "Barbell-Bent-Over-Row_Back_thumbnail.jpg"
+  },
+  {
+    "id": "barbell-curl",
+    "nameEn": "Barbell Curl",
+    "nameFr": "Curl à la barre",
+    "primaryMuscleGroup": "Biceps",
+    "secondaryMuscleGroups": ["Forearms"],
+    "equipment": "Barbell",
+    "exerciseType": "Weight & Reps",
+    "imageUrl": "Barbell-Curl_Upper-Arms_thumbnail.jpg"
+  },
+  {
+    "id": "barbell-full-squat",
+    "nameEn": "Barbell Full Squat",
+    "nameFr": "Squat complet à la barre",
+    "primaryMuscleGroup": "Quadriceps",
+    "secondaryMuscleGroups": ["Glutes", "Hamstrings"],
+    "equipment": "Barbell",
+    "exerciseType": "Weight & Reps",
+    "imageUrl": "Barbell-Full-Squat_Thighs_thumbnail.jpg"
+  },
+  {
+    "id": "pull-up",
+    "nameEn": "Pull Up",
+    "nameFr": "Traction",
+    "primaryMuscleGroup": "Lats",
+    "secondaryMuscleGroups": ["Biceps", "Upper Back"],
+    "equipment": "Bodyweight",
+    "exerciseType": "Weighted Bodyweight",
+    "imageUrl": "Pull-up_Back_thumbnail.jpg"
+  }
+]
