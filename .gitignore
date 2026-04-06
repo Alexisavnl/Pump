@@ -36,9 +36,15 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
+# generated native folders — android stays ignored, ios is tracked (custom Watch target + native modules)
 /android
+
+# iOS — generated/sensitive files only
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/**/GoogleService-Info.plist
+ios/**/GoogleService-Info\ 2.plist
 
 # Claude AI files
 .claude/
