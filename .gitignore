@@ -45,6 +45,7 @@ ios/build/
 ios/DerivedData/
 ios/**/GoogleService-Info.plist
 ios/**/GoogleService-Info\ 2.plist
+ios/images/
 
 # Claude AI files
 .claude/
