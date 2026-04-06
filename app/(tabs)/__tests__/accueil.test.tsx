@@ -188,7 +188,7 @@ describe('AccueilScreen', () => {
     expect(screen.getByTestId('resume-workout-button')).toBeTruthy();
   });
 
-  it('shows start button when today workout is already done', () => {
+  it('shows done button when today workout is already done', () => {
     const todayKey = makeTodayKey();
     const program = makeProgram('p1', 'PPL', [todayKey]);
     mockGetActiveProgram.mockReturnValue('p1');
@@ -196,7 +196,7 @@ describe('AccueilScreen', () => {
     mockIsWorkoutDone.mockReturnValue(true);
     renderWithProvider(<AccueilScreen />);
 
-    expect(screen.getByTestId('start-workout-button')).toBeTruthy();
+    expect(screen.getByTestId('workout-done-button')).toBeTruthy();
   });
 
   it('shows edit button when a session is displayed', () => {
