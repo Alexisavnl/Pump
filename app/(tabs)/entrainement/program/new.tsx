@@ -41,6 +41,8 @@ export default function NewProgramScreen() {
   const [description, setDescription] = useState('');
   const [days, setDays] = useState<Record<DayKey, Session[]>>({ ...EMPTY_DAYS });
   const [isEditing, setIsEditing] = useState(false);
+  const editingProgramIdRef = useRef<string | null>(null);
+  const editingCreatedAtRef = useRef<number | null>(null);
   const [activeDragDay, setActiveDragDay] = useState<DayKey | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
@@ -61,6 +63,8 @@ export default function NewProgramScreen() {
       if (draft.title) setTitle(draft.title);
       if (draft.description) setDescription(draft.description);
       if (draft.days) setDays(draft.days);
+      if (draft.id) editingProgramIdRef.current = draft.id;
+      if (draft.createdAt) editingCreatedAtRef.current = draft.createdAt;
     }
     isMountRef.current = false;
   }, []);
@@ -101,12 +105,13 @@ export default function NewProgramScreen() {
   };
 
   const handleConfirmSave = (activate: boolean) => {
+    const now = Date.now();
     const program: Program = {
-      id: Date.now().toString(),
+      id: editingProgramIdRef.current ?? now.toString(),
       title: title.trim() || 'Programme sans nom',
       description,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: editingCreatedAtRef.current ?? now,
+      updatedAt: now,
       days,
     };
     saveProgram(program);
@@ -212,6 +217,7 @@ export default function NewProgramScreen() {
       <RNScrollView
         ref={listRef}
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         scrollEnabled={!activeDragDay}
         onLayout={() => {
           // @ts-expect-error - measure exists on ScrollView native ref
@@ -244,14 +250,14 @@ export default function NewProgramScreen() {
           />
         </View>
 
-        <View>
+        <View style={styles.daysContainer}>
           {DAYS.map((day) => {
             const session = days[day][0] ?? null;
             return (
               <View
                 key={day}
                 testID={`day-block-${day}`}
-                style={[styles.dayBlock, activeDragDay === day && styles.dayBlockDragging]}
+                style={[styles.dayRow, activeDragDay === day && styles.dayBlockDragging]}
                 onLayout={(e) => {
                   rowLayoutsRef.current[day] = {
                     y: e.nativeEvent.layout.y,
@@ -262,39 +268,41 @@ export default function NewProgramScreen() {
                 <Text style={styles.dayLabel}>{day}</Text>
 
                 {session ? (
-                  <View style={styles.sessionRow}>
+                  <TouchableOpacity
+                    style={styles.sessionCard}
+                    activeOpacity={0.7}
+                    testID={`session-card-${session.id}`}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/entrainement/program/session/new',
+                        params: { day, sessionId: session.id },
+                      })
+                    }
+                  >
                     <View {...panResponders[day].panHandlers} style={styles.dragHandle}>
-                      <MaterialCommunityIcons name="drag-vertical" size={20} color="#6C6C70" />
+                      <MaterialCommunityIcons name="drag-vertical" size={20} color="#4C4C4E" />
                     </View>
-                    <TouchableOpacity
-                      style={styles.sessionInfo}
-                      activeOpacity={0.7}
-                      testID={`session-card-${session.id}`}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/entrainement/program/session/new',
-                          params: { day, sessionId: session.id },
-                        })
-                      }
-                    >
+                    <View style={styles.sessionInfo}>
                       <Text style={styles.sessionTitle}>{session.title}</Text>
                       <Text style={styles.sessionExerciseCount}>
-                        {session.exercises.length} exos
+                        {session.exercises.length} exercice
+                        {session.exercises.length !== 1 ? 's' : ''}
                       </Text>
-                    </TouchableOpacity>
+                    </View>
                     {isEditing && (
                       <TouchableOpacity
                         onPress={() => handleDeleteSession(day)}
                         testID={`delete-session-${day}`}
                         activeOpacity={0.7}
+                        style={styles.deleteButton}
                       >
-                        <Ionicons name="close-circle" size={22} color="#FF3B30" />
+                        <Ionicons name="close-circle" size={20} color="#FF3B30" />
                       </TouchableOpacity>
                     )}
-                  </View>
+                  </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
-                    style={styles.addSessionButton}
+                    style={styles.addSessionCard}
                     activeOpacity={0.7}
                     testID={`add-session-${day}`}
                     onPress={() =>
@@ -304,7 +312,8 @@ export default function NewProgramScreen() {
                       })
                     }
                   >
-                    <Text style={styles.addSessionText}>+ Ajouter une séance</Text>
+                    <Ionicons name="add" size={16} color="#5A5A5E" />
+                    <Text style={styles.addSessionText}>Ajouter une séance</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -401,6 +410,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   inputsContainer: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -409,65 +421,81 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
-    paddingVertical: 12,
+    paddingVertical: 6,
   },
   descriptionInput: {
     color: '#8E8E93',
     fontSize: 14,
-    paddingVertical: 8,
-    marginBottom: 16,
+    paddingVertical: 4,
+    marginBottom: 12,
   },
-  dayBlock: {
+  daysContainer: {
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
+    gap: 12,
   },
   dayBlockDragging: {
     opacity: 0.4,
   },
   dayLabel: {
-    color: '#6C6C70',
+    width: 36,
     fontSize: 12,
-    fontWeight: '600',
-    width: 40,
+    fontWeight: '700',
+    color: '#6C6C70',
+    letterSpacing: 0.5,
+    textAlign: 'right',
   },
-  sessionRow: {
+  sessionCard: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  dragHandle: {
-    marginRight: 8,
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    gap: 10,
+    minHeight: 62,
   },
   sessionInfo: {
     flex: 1,
   },
   sessionTitle: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   sessionExerciseCount: {
     color: '#6C6C70',
     fontSize: 12,
     marginTop: 2,
   },
-  addSessionButton: {
+  addSessionCard: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    gap: 6,
+    minHeight: 62,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#3A3A3C',
   },
   addSessionText: {
-    color: '#6C6C70',
+    color: '#5A5A5E',
     fontSize: 14,
-    textAlign: 'center',
+  },
+  deleteButton: {
+    padding: 2,
+  },
+  dragHandle: {
+    paddingHorizontal: 2,
   },
   saveContainer: {
     paddingHorizontal: 16,
