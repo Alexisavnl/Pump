@@ -71,7 +71,10 @@ describe('Workouts storage', () => {
       const history: ExerciseHistory = {
         exerciseId: 'ex1',
         lastPerformedAt: Date.now(),
-        sets: [{ kg: 80, reps: 8 }, { kg: 80, reps: 6 }],
+        sets: [
+          { kg: 80, reps: 8 },
+          { kg: 80, reps: 6 },
+        ],
       };
       saveExerciseHistory(history);
       const retrieved = getExerciseHistory('ex1');
@@ -85,8 +88,16 @@ describe('Workouts storage', () => {
     });
 
     it('overwrites previous history for same exercise', () => {
-      saveExerciseHistory({ exerciseId: 'ex1', lastPerformedAt: 1000, sets: [{ kg: 60, reps: 10 }] });
-      saveExerciseHistory({ exerciseId: 'ex1', lastPerformedAt: 2000, sets: [{ kg: 80, reps: 8 }] });
+      saveExerciseHistory({
+        exerciseId: 'ex1',
+        lastPerformedAt: 1000,
+        sets: [{ kg: 60, reps: 10 }],
+      });
+      saveExerciseHistory({
+        exerciseId: 'ex1',
+        lastPerformedAt: 2000,
+        sets: [{ kg: 80, reps: 8 }],
+      });
       const retrieved = getExerciseHistory('ex1');
       expect(retrieved?.sets[0].kg).toBe(80);
     });
