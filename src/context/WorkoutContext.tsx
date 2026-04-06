@@ -10,6 +10,9 @@ import type { ActiveWorkout, CompletedWorkout } from '../../types/workout';
 import { saveCompletedWorkout, saveExerciseHistory } from '../../utils/storage/workouts';
 import { markWorkoutDone } from '../../utils/storage/programs';
 import { initHealthKit, logWorkoutToHealthKit } from '../../utils/healthkit';
+import { WatchBridge } from '../utils/WatchBridge';
+import { useWatchConnectivity } from '../hooks/useWatchConnectivity';
+import type { WatchMessage } from '../hooks/useWatchConnectivity';
 
 // State
 
@@ -185,6 +188,26 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }, 1000);
   }, [clearTimer]);
 
+  const lastRestTimerKeyRef = useRef<string | null>(null);
+
+  // Sync active workout state to Watch on every change
+  useEffect(() => {
+    if (!state.active) return;
+    WatchBridge.sendStateUpdate(state.active);
+  }, [state.active]);
+
+  // Sync rest timer start to Watch (ignore subsequent ticks)
+  useEffect(() => {
+    if (!state.restTimer) {
+      lastRestTimerKeyRef.current = null;
+      return;
+    }
+    const key = `${state.restTimer.exerciseId}-${state.restTimer.totalSeconds}`;
+    if (key === lastRestTimerKeyRef.current) return;
+    lastRestTimerKeyRef.current = key;
+    WatchBridge.sendRestStarted(state.restTimer.exerciseId, state.restTimer.totalSeconds);
+  }, [state.restTimer]);
+
   const startWorkout = useCallback((workout: ActiveWorkout) => {
     dispatch({ type: 'START', payload: workout });
   }, []);
@@ -194,18 +217,19 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const discardWorkout = useCallback(() => {
     clearTimer();
+    WatchBridge.sendEndWorkout();
     dispatch({ type: 'DISCARD' });
   }, [clearTimer]);
 
   const finishWorkout = useCallback(() => {
     clearTimer();
+    WatchBridge.sendEndWorkout();
     const current = stateRef.current.active;
     if (!current) return;
     const today = new Date().toISOString().slice(0, 10);
     const completed = saveFinishedWorkout(current, today);
     dispatch({ type: 'DISCARD' });
 
-    // Log to Apple Health (fire and forget)
     initHealthKit()
       .then(() =>
         logWorkoutToHealthKit({
@@ -244,12 +268,65 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const adjustRest = useCallback((delta: number) => {
     dispatch({ type: 'ADJUST_REST', delta });
+    WatchBridge.sendAdjustRest(delta);
   }, []);
 
   const skipRest = useCallback(() => {
     clearTimer();
     dispatch({ type: 'SKIP_REST' });
+    WatchBridge.sendSkipRest();
   }, [clearTimer]);
+
+  const handleWatchMessage = useCallback(
+    (message: WatchMessage) => {
+      switch (message.type) {
+        case 'COMPLETE_SET': {
+          dispatch({
+            type: 'COMPLETE_SET',
+            exerciseId: message.exerciseId,
+            setIndex: message.setIndex,
+          });
+          const exercise = stateRef.current.active?.exercises.find(
+            (e) => e.exerciseId === message.exerciseId
+          );
+          if (exercise?.restTime && exercise.restTime > 0) {
+            dispatch({
+              type: 'START_REST',
+              exerciseId: message.exerciseId,
+              seconds: exercise.restTime,
+            });
+            startTimer();
+          }
+          break;
+        }
+        case 'UPDATE_SET':
+          dispatch({
+            type: 'UPDATE_SET',
+            exerciseId: message.exerciseId,
+            setIndex: message.setIndex,
+            field: message.field,
+            value: message.value,
+          });
+          break;
+        case 'SKIP_REST':
+          clearTimer();
+          dispatch({ type: 'SKIP_REST' });
+          break;
+        case 'ADJUST_REST':
+          dispatch({ type: 'ADJUST_REST', delta: message.delta });
+          break;
+        case 'END_WORKOUT':
+          finishWorkout();
+          break;
+        case 'ABANDON_WORKOUT':
+          discardWorkout();
+          break;
+      }
+    },
+    [startTimer, clearTimer, finishWorkout, discardWorkout]
+  );
+
+  useWatchConnectivity(handleWatchMessage);
 
   return (
     <WorkoutContext.Provider
