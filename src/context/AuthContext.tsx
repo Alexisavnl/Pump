@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 GoogleSignin.configure({
@@ -41,9 +41,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async (): Promise<void> => {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    const { data } = await GoogleSignin.signIn();
-    if (!data?.idToken) throw new Error('auth/cancelled');
-    const credential = auth.GoogleAuthProvider.credential(data.idToken);
+    let result: Awaited<ReturnType<typeof GoogleSignin.signIn>>;
+    try {
+      result = await GoogleSignin.signIn();
+    } catch (error: unknown) {
+      const code = (error as { code?: string | number }).code;
+      if (code === statusCodes.SIGN_IN_CANCELLED || code === statusCodes.IN_PROGRESS) return;
+      throw error;
+    }
+    if (!result.data?.idToken) return;
+    const credential = auth.GoogleAuthProvider.credential(result.data.idToken);
     await auth().signInWithCredential(credential);
   };
 
