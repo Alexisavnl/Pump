@@ -1,9 +1,15 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback } from 'react';
-import { getAllPrograms, clearDraft, getActiveProgram } from '../../../utils/storage/programs';
+import {
+  getAllPrograms,
+  clearDraft,
+  getActiveProgram,
+  deleteProgram,
+  saveDraft,
+} from '../../../utils/storage/programs';
 import type { Program } from '../../../types/program';
 
 function countWeeklySessions(days: Program['days']): number {
@@ -13,6 +19,7 @@ function countWeeklySessions(days: Program['days']): number {
 export default function EntrainementScreen() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [activeProgramId, setActiveProgramId] = useState<string | null>(null);
+  const [menuProgramId, setMenuProgramId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -25,6 +32,21 @@ export default function EntrainementScreen() {
     clearDraft();
     router.push('/entrainement/program/new');
   };
+
+  const handleEditProgram = (program: Program) => {
+    saveDraft(program);
+    setMenuProgramId(null);
+    router.push('/entrainement/program/new');
+  };
+
+  const handleDeleteProgram = (id: string) => {
+    deleteProgram(id);
+    setPrograms(getAllPrograms());
+    setActiveProgramId(getActiveProgram());
+    setMenuProgramId(null);
+  };
+
+  const menuProgram = programs.find((p) => p.id === menuProgramId) ?? null;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -77,6 +99,7 @@ export default function EntrainementScreen() {
                           style={styles.menuButton}
                           testID={`program-menu-${program.id}`}
                           activeOpacity={0.7}
+                          onPress={() => setMenuProgramId(program.id)}
                         >
                           <Ionicons name="ellipsis-horizontal" size={18} color="#8E8E93" />
                         </TouchableOpacity>
@@ -89,6 +112,44 @@ export default function EntrainementScreen() {
           )}
         </View>
       </View>
+      <Modal
+        visible={!!menuProgram}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuProgramId(null)}
+        testID="program-menu-modal"
+      >
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={() => setMenuProgramId(null)}
+          testID="program-menu-backdrop"
+        >
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle} numberOfLines={1}>
+              {menuProgram?.title}
+            </Text>
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.7}
+              testID="menu-edit-button"
+              onPress={() => menuProgram && handleEditProgram(menuProgram)}
+            >
+              <Ionicons name="pencil-outline" size={20} color="#ffffff" />
+              <Text style={styles.menuItemText}>Modifier le programme</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemDestructive]}
+              activeOpacity={0.7}
+              testID="menu-delete-button"
+              onPress={() => menuProgram && handleDeleteProgram(menuProgram.id)}
+            >
+              <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+              <Text style={styles.menuItemTextDestructive}>Supprimer le programme</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -199,5 +260,46 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: 4,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  menuCard: {
+    backgroundColor: '#2C2C2E',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 40,
+    gap: 4,
+  },
+  menuTitle: {
+    fontSize: 13,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  menuItemDestructive: {
+    marginTop: 4,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '500',
+  },
+  menuItemTextDestructive: {
+    fontSize: 16,
+    color: '#FF3B30',
+    fontWeight: '500',
   },
 });

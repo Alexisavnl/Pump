@@ -215,7 +215,7 @@ describe('NewProgramScreen', () => {
     render(<NewProgramScreen />);
     expect(screen.getByTestId('session-card-session-1')).toBeTruthy();
     expect(screen.getByText('Upper A')).toBeTruthy();
-    expect(screen.getByText('0 exos')).toBeTruthy();
+    expect(screen.getByText('0 exercices')).toBeTruthy();
   });
 
   it('navigates to session edit page when session card is pressed', () => {

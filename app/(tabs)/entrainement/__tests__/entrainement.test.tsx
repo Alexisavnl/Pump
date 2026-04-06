@@ -1,12 +1,23 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import EntrainementScreen from '../index';
-import { getAllPrograms, getActiveProgram } from '../../../../utils/storage/programs';
+import {
+  getAllPrograms,
+  getActiveProgram,
+  deleteProgram,
+  saveDraft,
+} from '../../../../utils/storage/programs';
 import type { Program } from '../../../../types/program';
 
 jest.mock('react-native-mmkv');
 jest.mock('react-native-safe-area-context');
-jest.mock('../../../../utils/storage/programs');
+jest.mock('../../../../utils/storage/programs', () => ({
+  getAllPrograms: jest.fn(),
+  getActiveProgram: jest.fn(),
+  deleteProgram: jest.fn(),
+  saveDraft: jest.fn(),
+  clearDraft: jest.fn(),
+}));
 jest.mock('expo-router', () => {
   const React = require('react');
   return {
@@ -37,6 +48,8 @@ const makeProgram = (id: string, title: string, activeDays: number = 0): Program
 
 const mockGetAllPrograms = getAllPrograms as jest.MockedFunction<typeof getAllPrograms>;
 const mockGetActiveProgram = getActiveProgram as jest.MockedFunction<typeof getActiveProgram>;
+const mockDeleteProgram = deleteProgram as jest.MockedFunction<typeof deleteProgram>;
+const mockSaveDraft = saveDraft as jest.MockedFunction<typeof saveDraft>;
 
 describe('EntrainementScreen', () => {
   beforeEach(() => {
@@ -120,5 +133,32 @@ describe('EntrainementScreen', () => {
     mockGetAllPrograms.mockReturnValue([makeProgram('p1', 'PPL')]);
     render(<EntrainementScreen />);
     expect(screen.getByTestId('program-menu-p1')).toBeTruthy();
+  });
+
+  it('opens menu modal when menu button is pressed', () => {
+    mockGetAllPrograms.mockReturnValue([makeProgram('p1', 'PPL')]);
+    render(<EntrainementScreen />);
+    fireEvent.press(screen.getByTestId('program-menu-p1'));
+    expect(screen.getByTestId('menu-edit-button')).toBeTruthy();
+    expect(screen.getByTestId('menu-delete-button')).toBeTruthy();
+  });
+
+  it('deletes program when delete menu item is pressed', () => {
+    mockGetAllPrograms.mockReturnValue([makeProgram('p1', 'PPL')]);
+    render(<EntrainementScreen />);
+    fireEvent.press(screen.getByTestId('program-menu-p1'));
+    fireEvent.press(screen.getByTestId('menu-delete-button'));
+    expect(mockDeleteProgram).toHaveBeenCalledWith('p1');
+  });
+
+  it('saves draft and navigates to edit when edit menu item is pressed', () => {
+    const { router } = jest.requireMock('expo-router') as { router: { push: jest.Mock } };
+    const program = makeProgram('p1', 'PPL');
+    mockGetAllPrograms.mockReturnValue([program]);
+    render(<EntrainementScreen />);
+    fireEvent.press(screen.getByTestId('program-menu-p1'));
+    fireEvent.press(screen.getByTestId('menu-edit-button'));
+    expect(mockSaveDraft).toHaveBeenCalledWith(program);
+    expect(router.push).toHaveBeenCalledWith('/entrainement/program/new');
   });
 });
