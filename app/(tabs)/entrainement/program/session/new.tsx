@@ -20,7 +20,13 @@ import {
   getTempExercises,
   clearTempExercises,
 } from '../../../../../utils/storage/programs';
-import type { Session, DayKey, ExerciseConfig, Set as SetType } from '../../../../../types/program';
+import type {
+  Session,
+  DayKey,
+  ExerciseConfig,
+  FixedSet,
+  RangeSet,
+} from '../../../../../types/program';
 import exerciseImages from '../../../../../data/exerciseImages';
 
 const EMPTY_DAYS: Record<DayKey, Session[]> = {
@@ -121,19 +127,22 @@ export default function NewSessionScreen() {
     setExpandedId((prev) => (prev === exerciseId ? null : exerciseId));
   };
 
-  const updateExercise = (exerciseId: string, updates: Partial<ExerciseConfig>) => {
+  const updateExercise = (
+    exerciseId: string,
+    updates: Partial<Pick<ExerciseConfig, 'notes' | 'restTime'>>
+  ) => {
     setExercises((prev) =>
-      prev.map((ex) => (ex.exerciseId === exerciseId ? { ...ex, ...updates } : ex))
+      prev.map((ex): ExerciseConfig => (ex.exerciseId === exerciseId ? { ...ex, ...updates } : ex))
     );
   };
 
   const updateSet = (exerciseId: string, setIdx: number, field: 'kg' | 'reps', value: string) => {
     const num = parseFloat(value) || 0;
     setExercises((prev) =>
-      prev.map((ex) => {
+      prev.map((ex): ExerciseConfig => {
         if (ex.exerciseId !== exerciseId) return ex;
         const newSets = ex.sets.map((s, i) => (i === setIdx ? { ...s, [field]: num } : s));
-        return { ...ex, sets: newSets };
+        return { ...ex, sets: newSets } as ExerciseConfig;
       })
     );
   };
@@ -148,13 +157,10 @@ export default function NewSessionScreen() {
     setExercises((prev) =>
       prev.map((ex) => {
         if (ex.exerciseId !== exerciseId) return ex;
+        if (ex.repType !== 'range') return ex;
         const newSets = ex.sets.map((s, i) => {
           if (i !== setIdx) return s;
-          const current =
-            typeof s.reps === 'object'
-              ? (s.reps as { min: number; max: number })
-              : { min: s.reps as number, max: s.reps as number };
-          return { ...s, reps: { ...current, [field]: num } };
+          return { ...s, reps: { ...s.reps, [field]: num } };
         });
         return { ...ex, sets: newSets };
       })
@@ -163,41 +169,52 @@ export default function NewSessionScreen() {
 
   const addSet = (exerciseId: string) => {
     setExercises((prev) =>
-      prev.map((ex) => {
+      prev.map((ex): ExerciseConfig => {
         if (ex.exerciseId !== exerciseId) return ex;
-        const lastSet = ex.sets[ex.sets.length - 1];
-        const newSet: SetType = {
-          serieNumber: ex.sets.length + 1,
-          kg: typeof lastSet?.kg === 'number' ? lastSet.kg : 0,
-          reps:
-            ex.repType === 'range'
-              ? { min: 0, max: 0 }
-              : typeof lastSet?.reps === 'number'
-                ? lastSet.reps
-                : 0,
-        };
-        return { ...ex, sets: [...ex.sets, newSet] };
+        if (ex.repType === 'range') {
+          const lastSet = ex.sets[ex.sets.length - 1];
+          const newSet: RangeSet = {
+            serieNumber: ex.sets.length + 1,
+            kg: lastSet?.kg ?? 0,
+            reps: { min: lastSet?.reps.min ?? 0, max: lastSet?.reps.max ?? 0 },
+          };
+          return { ...ex, sets: [...ex.sets, newSet] };
+        } else {
+          const lastSet = ex.sets[ex.sets.length - 1];
+          const newSet: FixedSet = {
+            serieNumber: ex.sets.length + 1,
+            kg: lastSet?.kg ?? 0,
+            reps: lastSet?.reps ?? 0,
+          };
+          return { ...ex, sets: [...ex.sets, newSet] };
+        }
       })
     );
   };
 
   const changeRepType = (exerciseId: string, repType: 'fixed' | 'range') => {
     setExercises((prev) =>
-      prev.map((ex) => {
+      prev.map((ex): ExerciseConfig => {
         if (ex.exerciseId !== exerciseId) return ex;
-        const newSets = ex.sets.map((s) => ({
-          ...s,
-          reps:
-            repType === 'range'
-              ? {
-                  min: typeof s.reps === 'number' ? s.reps : (s.reps as { min: number }).min,
-                  max: typeof s.reps === 'number' ? s.reps : (s.reps as { max: number }).max,
-                }
-              : typeof s.reps === 'number'
-                ? s.reps
-                : (s.reps as { min: number }).min,
-        }));
-        return { ...ex, repType, sets: newSets };
+        if (repType === 'range') {
+          if (ex.repType === 'range') return ex;
+          return {
+            ...ex,
+            repType: 'range',
+            sets: ex.sets.map((s) => ({
+              serieNumber: s.serieNumber,
+              kg: s.kg,
+              reps: { min: s.reps, max: s.reps },
+            })),
+          };
+        } else {
+          if (ex.repType === 'fixed') return ex;
+          return {
+            ...ex,
+            repType: 'fixed',
+            sets: ex.sets.map((s) => ({ serieNumber: s.serieNumber, kg: s.kg, reps: s.reps.min })),
+          };
+        }
       })
     );
     setRepsModalId(null);
@@ -348,11 +365,7 @@ export default function NewSessionScreen() {
                               <View style={[styles.setCellReps, styles.rangeRepsCell]}>
                                 <TextInput
                                   style={[styles.setCell, styles.setCellInput, styles.rangeInput]}
-                                  value={String(
-                                    typeof set.reps === 'object'
-                                      ? (set.reps as { min: number }).min
-                                      : set.reps
-                                  )}
+                                  value={String((set as RangeSet).reps.min)}
                                   onChangeText={(v) =>
                                     updateSetRangeReps(ex.exerciseId, idx, 'min', v)
                                   }
@@ -362,11 +375,7 @@ export default function NewSessionScreen() {
                                 <Text style={styles.rangeSeparator}>à</Text>
                                 <TextInput
                                   style={[styles.setCell, styles.setCellInput, styles.rangeInput]}
-                                  value={String(
-                                    typeof set.reps === 'object'
-                                      ? (set.reps as { max: number }).max
-                                      : set.reps
-                                  )}
+                                  value={String((set as RangeSet).reps.max)}
                                   onChangeText={(v) =>
                                     updateSetRangeReps(ex.exerciseId, idx, 'max', v)
                                   }
@@ -377,7 +386,7 @@ export default function NewSessionScreen() {
                             ) : (
                               <TextInput
                                 style={[styles.setCell, styles.setCellInput, styles.setCellReps]}
-                                value={String(typeof set.reps === 'number' ? set.reps : 0)}
+                                value={String((set as FixedSet).reps)}
                                 onChangeText={(v) => updateSet(ex.exerciseId, idx, 'reps', v)}
                                 keyboardType="numeric"
                                 testID={`set-reps-${ex.exerciseId}-${idx}`}

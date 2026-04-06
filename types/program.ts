@@ -1,18 +1,23 @@
-export interface Set {
+interface BaseSet {
   serieNumber: number;
   kg: number;
-  reps: number | { min: number; max: number };
 }
 
-export interface ExerciseConfig {
+export type FixedSet = BaseSet & { reps: number };
+export type RangeSet = BaseSet & { reps: { min: number; max: number } };
+export type Set = FixedSet | RangeSet;
+
+interface BaseExerciseConfig {
   exerciseId: string;
   exerciseName: string;
   imageUrl: string;
   notes: string;
   restTime: number | null;
-  repType: 'fixed' | 'range';
-  sets: Set[];
 }
+
+export type ExerciseConfig =
+  | (BaseExerciseConfig & { repType: 'fixed'; sets: FixedSet[] })
+  | (BaseExerciseConfig & { repType: 'range'; sets: RangeSet[] });
 
 export interface Session {
   id: string;
