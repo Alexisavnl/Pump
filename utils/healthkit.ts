@@ -18,6 +18,7 @@ let initialized = false;
 
 export function initHealthKit(): Promise<void> {
   if (Platform.OS !== 'ios') return Promise.resolve();
+  if (typeof AppleHealthKit?.initHealthKit !== 'function') return Promise.resolve();
 
   return new Promise((resolve, reject) => {
     if (initialized) return resolve();

@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.alexisavnl.pump",
+      "buildNumber": "1",
       "googleServicesFile": "./GoogleService-Info.plist",
       "splash": {
         "image": "./assets/splash-icon.png",
@@ -25,7 +26,8 @@
       "generateSplashScreens": true,
       "infoPlist": {
         "NSHealthShareUsageDescription": "Pump utilise HealthKit pour lire vos données de santé et afficher vos statistiques d'entraînement.",
-        "NSHealthUpdateUsageDescription": "Pump enregistre vos séances de musculation dans Apple Santé."
+        "NSHealthUpdateUsageDescription": "Pump enregistre vos séances de musculation dans Apple Santé.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
