@@ -11,10 +11,9 @@ import { saveCompletedWorkout, saveExerciseHistory } from '../../utils/storage/w
 import { markWorkoutDone } from '../../utils/storage/programs';
 import { initHealthKit, logWorkoutToHealthKit } from '../../utils/healthkit';
 import { WatchBridge } from '../utils/WatchBridge';
+import { WorkoutSessionBridge } from '../utils/WorkoutSessionBridge';
 import { useWatchConnectivity } from '../hooks/useWatchConnectivity';
 import type { WatchMessage } from '../hooks/useWatchConnectivity';
-
-// State
 
 interface RestTimer {
   exerciseId: string;
@@ -33,8 +32,6 @@ const initialState: WorkoutState = {
   restTimer: null,
   isWorkoutVisible: false,
 };
-
-// Actions
 
 type WorkoutAction =
   | { type: 'START'; payload: ActiveWorkout }
@@ -144,8 +141,6 @@ function reducer(state: WorkoutState, action: WorkoutAction): WorkoutState {
   }
 }
 
-// Context
-
 interface WorkoutContextValue {
   state: WorkoutState;
   startWorkout: (workout: ActiveWorkout) => void;
@@ -176,7 +171,6 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Clean up timer on unmount
   useEffect(() => {
     return clearTimer;
   }, [clearTimer]);
@@ -190,13 +184,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const lastRestTimerKeyRef = useRef<string | null>(null);
 
-  // Sync active workout state to Watch on every change
   useEffect(() => {
     if (!state.active) return;
     WatchBridge.sendStateUpdate(state.active);
   }, [state.active]);
 
-  // Sync rest timer start to Watch (ignore subsequent ticks)
   useEffect(() => {
     if (!state.restTimer) {
       lastRestTimerKeyRef.current = null;
@@ -210,6 +202,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const startWorkout = useCallback((workout: ActiveWorkout) => {
     dispatch({ type: 'START', payload: workout });
+    WorkoutSessionBridge.start().catch(() => {});
   }, []);
 
   const showWorkout = useCallback(() => dispatch({ type: 'SHOW' }), []);
@@ -218,12 +211,14 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const discardWorkout = useCallback(() => {
     clearTimer();
     WatchBridge.sendEndWorkout();
+    WorkoutSessionBridge.stop();
     dispatch({ type: 'DISCARD' });
   }, [clearTimer]);
 
   const finishWorkout = useCallback(() => {
     clearTimer();
     WatchBridge.sendEndWorkout();
+    WorkoutSessionBridge.stop();
     const current = stateRef.current.active;
     if (!current) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -355,7 +350,6 @@ export function useWorkout(): WorkoutContextValue {
   return ctx;
 }
 
-// Helper to build ActiveWorkout from a session
 export function buildActiveWorkout(
   session: {
     id: string;
@@ -400,14 +394,12 @@ export function buildActiveWorkout(
   };
 }
 
-// Helper to compute finished workout stats and save
 export function saveFinishedWorkout(active: ActiveWorkout, dateKey: string): CompletedWorkout {
   const now = Date.now();
   const durationSeconds = Math.round((now - active.startedAt) / 1000);
   const completedSets = active.exercises.flatMap((ex) => ex.sets.filter((s) => s.completed));
   const totalVolume = completedSets.reduce((sum, s) => sum + s.kg * s.reps, 0);
 
-  // Save exercise history for "Précédent" column
   for (const ex of active.exercises) {
     const done = ex.sets.filter((s) => s.completed);
     if (done.length > 0) {
