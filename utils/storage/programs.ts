@@ -9,6 +9,7 @@ const KEYS = {
   DRAFT: 'program_draft',
   ACTIVE_PROGRAM: 'active_program_id',
   TEMP_EXERCISES: 'temp_exercises',
+  COMPLETED_WORKOUTS: 'completed_workouts',
 } as const;
 
 export function saveProgram(program: Program): void {
@@ -77,6 +78,24 @@ export function setActiveProgram(id: string): void {
 
 export function getActiveProgram(): string | null {
   return storage.getString(KEYS.ACTIVE_PROGRAM) ?? null;
+}
+
+export function markWorkoutDone(dateKey: string): void {
+  const done = getCompletedWorkouts();
+  if (!done.includes(dateKey)) {
+    done.push(dateKey);
+    storage.set(KEYS.COMPLETED_WORKOUTS, JSON.stringify(done));
+  }
+}
+
+export function isWorkoutDone(dateKey: string): boolean {
+  return getCompletedWorkouts().includes(dateKey);
+}
+
+export function getCompletedWorkouts(): string[] {
+  const raw = storage.getString(KEYS.COMPLETED_WORKOUTS);
+  if (!raw) return [];
+  return JSON.parse(raw) as string[];
 }
 
 function getProgramsIndex(): string[] {

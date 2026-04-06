@@ -19,6 +19,8 @@ import {
   getDraft,
   getTempExercises,
   clearTempExercises,
+  getProgram,
+  saveProgram,
 } from '../../../../../utils/storage/programs';
 import type {
   Session,
@@ -26,6 +28,7 @@ import type {
   ExerciseConfig,
   FixedSet,
   RangeSet,
+  Program,
 } from '../../../../../types/program';
 import exerciseImages from '../../../../../data/exerciseImages';
 
@@ -65,7 +68,11 @@ function formatRestTime(seconds: number | null): string {
 
 export default function NewSessionScreen() {
   const { bottom } = useSafeAreaInsets();
-  const { day, sessionId } = useLocalSearchParams<{ day: string; sessionId?: string }>();
+  const { day, sessionId, programId } = useLocalSearchParams<{
+    day: string;
+    sessionId?: string;
+    programId?: string;
+  }>();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [exercises, setExercises] = useState<ExerciseConfig[]>([]);
@@ -120,6 +127,14 @@ export default function NewSessionScreen() {
     }
 
     saveDraft({ ...draft, days });
+
+    if (programId) {
+      const program = getProgram(programId);
+      if (program) {
+        saveProgram({ ...program, days: days as Program['days'], updatedAt: Date.now() });
+      }
+    }
+
     router.back();
   };
 
