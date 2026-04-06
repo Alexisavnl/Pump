@@ -18,7 +18,6 @@
 		63DC46932A3C15F2DB6DF459 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5108760C213901500804C881 /* PrivacyInfo.xcprivacy */; };
 		94C28F607FA4461A8BF535CE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 306F976090414458B81B3878 /* GoogleService-Info.plist */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D45B01965258983B233345AF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5108760C213901500804C881 /* PrivacyInfo.xcprivacy */; };
 		E239BDA1D5BB8E6E03467E64 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8183BB23F87F2CA98590A971 /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -300,7 +299,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D45B01965258983B233345AF /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
