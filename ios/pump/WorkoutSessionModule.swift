@@ -5,7 +5,7 @@ import React
 class WorkoutSessionModule: NSObject {
   private let healthStore = HKHealthStore()
 
-  @objc func requiresMainQueueSetup() -> Bool { return false }
+  @objc static func requiresMainQueueSetup() -> Bool { return false }
 
   @objc func start(_ resolve: @escaping RCTPromiseResolveBlock,
                    rejecter reject: @escaping RCTPromiseRejectBlock) {
