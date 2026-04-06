@@ -6,6 +6,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useWorkout } from '../../src/context/WorkoutContext';
 import WorkoutScreen from '../workout/index';
 
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  return m > 0 ? `${m}min` : `${seconds}s`;
+}
+
 function WorkoutBanner() {
   const { bottom } = useSafeAreaInsets();
   const { state, showWorkout, discardWorkout } = useWorkout();
@@ -17,11 +22,6 @@ function WorkoutBanner() {
   const currentExercise =
     active.exercises.find((ex) => ex.sets.some((s) => !s.completed)) ?? active.exercises[0];
 
-  function formatElapsed(s: number): string {
-    const m = Math.floor(s / 60);
-    return m > 0 ? `${m}min` : `${s}s`;
-  }
-
   return (
     <TouchableOpacity
       style={[styles.banner, { bottom: bottom + 56 }]}
@@ -29,7 +29,7 @@ function WorkoutBanner() {
       activeOpacity={0.95}
       testID="workout-banner"
     >
-      <TouchableOpacity style={styles.bannerChevron} onPress={showWorkout}>
+      <TouchableOpacity style={styles.bannerIconButton} onPress={showWorkout}>
         <Ionicons name="chevron-up" size={18} color="#ffffff" />
       </TouchableOpacity>
 
@@ -46,7 +46,7 @@ function WorkoutBanner() {
       </View>
 
       <TouchableOpacity
-        style={styles.bannerTrash}
+        style={styles.bannerIconButton}
         onPress={discardWorkout}
         testID="banner-discard-button"
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  bannerChevron: {
+  bannerIconButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -157,13 +157,5 @@ const styles = StyleSheet.create({
   bannerSubtitle: {
     fontSize: 12,
     color: '#8E8E93',
-  },
-  bannerTrash: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#3C3C3E',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

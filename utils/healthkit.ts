@@ -12,6 +12,8 @@ const PERMISSIONS: HealthKitPermissions = {
   },
 };
 
+const KCAL_PER_MINUTE = 5; // Rough estimate for strength training
+
 let initialized = false;
 
 export function initHealthKit(): Promise<void> {
@@ -21,7 +23,7 @@ export function initHealthKit(): Promise<void> {
     if (initialized) return resolve();
     AppleHealthKit.initHealthKit(PERMISSIONS, (error) => {
       if (error) {
-        reject(new Error(error));
+        reject(new Error(`HealthKit init failed: ${error}`));
         return;
       }
       initialized = true;
@@ -46,21 +48,16 @@ export function logWorkoutToHealthKit(workout: WorkoutToLog): Promise<void> {
       startDate: workout.startDate.toISOString(),
       endDate: workout.endDate.toISOString(),
       duration: workout.durationSeconds,
-      totalEnergyBurned: estimateCalories(workout.durationSeconds),
-      totalEnergyBurnedUnit: 'kilocalorie' as const,
+      energyBurned: Math.round((workout.durationSeconds / 60) * KCAL_PER_MINUTE),
+      energyBurnedUnit: 'kilocalorie' as const,
     };
 
     AppleHealthKit.saveWorkout(options, (error: string, _result: HealthValue) => {
       if (error) {
-        reject(new Error(error));
+        reject(new Error(`HealthKit saveWorkout failed: ${error}`));
         return;
       }
       resolve();
     });
   });
-}
-
-// Rough estimate: ~5 kcal/min for strength training
-function estimateCalories(durationSeconds: number): number {
-  return Math.round((durationSeconds / 60) * 5);
 }

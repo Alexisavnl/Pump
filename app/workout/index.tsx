@@ -46,14 +46,39 @@ function SetRow({ set, idx, exerciseId, onUpdate, onComplete }: SetRowProps) {
   const [kgText, setKgText] = useState(String(set.kg));
   const [repsText, setRepsText] = useState(String(set.reps));
 
-  // Sync only when set index changes (new set added), not on every render
+  // Re-sync local text when the set identity changes (e.g. new set added)
   const setKey = `${exerciseId}-${idx}`;
-  const [lastKey, setLastKey] = useState(setKey);
-  if (lastKey !== setKey) {
-    setLastKey(setKey);
+  useEffect(() => {
     setKgText(String(set.kg));
     setRepsText(String(set.reps));
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setKey]);
+
+  const handleKgChange = (v: string) => {
+    setKgText(v);
+    const num = parseFloat(v);
+    if (!isNaN(num)) onUpdate('kg', num);
+  };
+
+  const handleKgBlur = () => {
+    const num = parseFloat(kgText);
+    const final = isNaN(num) ? 0 : num;
+    onUpdate('kg', final);
+    setKgText(String(final));
+  };
+
+  const handleRepsChange = (v: string) => {
+    setRepsText(v);
+    const num = parseFloat(v);
+    if (!isNaN(num)) onUpdate('reps', num);
+  };
+
+  const handleRepsBlur = () => {
+    const num = parseFloat(repsText);
+    const final = isNaN(num) ? 0 : num;
+    onUpdate('reps', final);
+    setRepsText(String(final));
+  };
 
   return (
     <View
@@ -74,17 +99,8 @@ function SetRow({ set, idx, exerciseId, onUpdate, onComplete }: SetRowProps) {
           set.completed && styles.setCellInputDone,
         ]}
         value={kgText}
-        onChangeText={(v) => {
-          setKgText(v);
-          const num = parseFloat(v);
-          if (!isNaN(num)) onUpdate('kg', num);
-        }}
-        onBlur={() => {
-          const num = parseFloat(kgText);
-          const final = isNaN(num) ? 0 : num;
-          onUpdate('kg', final);
-          setKgText(String(final));
-        }}
+        onChangeText={handleKgChange}
+        onBlur={handleKgBlur}
         keyboardType="numeric"
         testID={`set-kg-${exerciseId}-${idx}`}
       />
@@ -96,17 +112,8 @@ function SetRow({ set, idx, exerciseId, onUpdate, onComplete }: SetRowProps) {
           set.completed && styles.setCellInputDone,
         ]}
         value={repsText}
-        onChangeText={(v) => {
-          setRepsText(v);
-          const num = parseFloat(v);
-          if (!isNaN(num)) onUpdate('reps', num);
-        }}
-        onBlur={() => {
-          const num = parseFloat(repsText);
-          const final = isNaN(num) ? 0 : num;
-          onUpdate('reps', final);
-          setRepsText(String(final));
-        }}
+        onChangeText={handleRepsChange}
+        onBlur={handleRepsBlur}
         keyboardType="numeric"
         testID={`set-reps-${exerciseId}-${idx}`}
       />
@@ -122,7 +129,7 @@ function SetRow({ set, idx, exerciseId, onUpdate, onComplete }: SetRowProps) {
 }
 
 export default function WorkoutScreen() {
-  const { bottom, top } = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const {
     state,
     hideWorkout,
@@ -149,18 +156,13 @@ export default function WorkoutScreen() {
 
   if (!active || !isWorkoutVisible) return null;
 
-  const elapsedSeconds = elapsed;
   const completedSets = active.exercises.flatMap((ex) => ex.sets.filter((s) => s.completed));
-  const totalVolume = completedSets.reduce((sum, s) => sum + s.kg * s.reps, 0);
+  const totalVolume = Math.round(completedSets.reduce((sum, s) => sum + s.kg * s.reps, 0));
 
   const handleFinish = () => {
     Alert.alert('Terminer la séance ?', 'Les séries non validées ne seront pas comptabilisées.', [
       { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Terminer',
-        style: 'destructive',
-        onPress: finishWorkout,
-      },
+      { text: 'Terminer', style: 'destructive', onPress: finishWorkout },
     ]);
   };
 
@@ -193,7 +195,7 @@ export default function WorkoutScreen() {
         <View style={styles.statsBar}>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Durée</Text>
-            <Text style={styles.statValue}>{formatDuration(elapsedSeconds)}</Text>
+            <Text style={styles.statValue}>{formatDuration(elapsed)}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Volume</Text>
@@ -210,7 +212,10 @@ export default function WorkoutScreen() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 120 }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: restTimer ? bottom + 100 : 40 },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {active.exercises.map((ex) => (
@@ -245,7 +250,7 @@ export default function WorkoutScreen() {
               {/* Sets */}
               {ex.sets.map((set, idx) => (
                 <SetRow
-                  key={idx}
+                  key={`${ex.exerciseId}-${set.serieNumber}`}
                   set={set}
                   idx={idx}
                   exerciseId={ex.exerciseId}
@@ -268,7 +273,10 @@ export default function WorkoutScreen() {
 
         {/* Rest timer bar */}
         {restTimer && (
-          <View style={[styles.restTimerBar, { bottom: bottom + 60 }]} testID="rest-timer-bar">
+          <View
+            style={[styles.restTimerBar, { bottom: 0, paddingBottom: bottom + 12 }]}
+            testID="rest-timer-bar"
+          >
             <TouchableOpacity
               style={styles.restAdjustButton}
               onPress={() => adjustRest(-15)}
@@ -475,7 +483,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#2C2C2E',
-    paddingVertical: 12,
+    paddingTop: 12,
     paddingHorizontal: 16,
     gap: 12,
   },

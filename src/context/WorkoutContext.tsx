@@ -1,5 +1,12 @@
-import React, { createContext, useContext, useReducer, useRef, useCallback } from 'react';
-import type { ActiveWorkout, WorkoutExercise, CompletedWorkout } from '../../types/workout';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useRef,
+  useCallback,
+  useEffect,
+} from 'react';
+import type { ActiveWorkout, CompletedWorkout } from '../../types/workout';
 import { saveCompletedWorkout, saveExerciseHistory } from '../../utils/storage/workouts';
 import { markWorkoutDone } from '../../utils/storage/programs';
 import { initHealthKit, logWorkoutToHealthKit } from '../../utils/healthkit';
@@ -10,7 +17,6 @@ interface RestTimer {
   exerciseId: string;
   totalSeconds: number;
   remainingSeconds: number;
-  running: boolean;
 }
 
 interface WorkoutState {
@@ -64,9 +70,15 @@ function reducer(state: WorkoutState, action: WorkoutAction): WorkoutState {
       if (!state.active) return state;
       const exercises = state.active.exercises.map((ex) => {
         if (ex.exerciseId !== action.exerciseId) return ex;
-        const sets = ex.sets.map((s, i) =>
-          i === action.setIndex ? { ...s, completed: !s.completed, completedAt: Date.now() } : s
-        );
+        const sets = ex.sets.map((s, i) => {
+          if (i !== action.setIndex) return s;
+          const nowCompleted = !s.completed;
+          return {
+            ...s,
+            completed: nowCompleted,
+            completedAt: nowCompleted ? Date.now() : undefined,
+          };
+        });
         return { ...ex, sets };
       });
       return { ...state, active: { ...state.active, exercises } };
@@ -107,7 +119,6 @@ function reducer(state: WorkoutState, action: WorkoutAction): WorkoutState {
           exerciseId: action.exerciseId,
           totalSeconds: action.seconds,
           remainingSeconds: action.seconds,
-          running: true,
         },
       };
 
@@ -127,9 +138,6 @@ function reducer(state: WorkoutState, action: WorkoutAction): WorkoutState {
 
     case 'SKIP_REST':
       return { ...state, restTimer: null };
-
-    default:
-      return state;
   }
 }
 
@@ -164,6 +172,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       timerRef.current = null;
     }
   }, []);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return clearTimer;
+  }, [clearTimer]);
 
   const startTimer = useCallback(() => {
     clearTimer();
@@ -202,8 +215,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           totalVolume: completed.totalVolume,
         })
       )
-      .catch(() => {
-        // HealthKit unavailable or permission denied — silent fail
+      .catch((err) => {
+        console.warn('[HealthKit] Failed to log workout:', err);
       });
   }, [clearTimer]);
 
@@ -300,7 +313,7 @@ export function buildActiveWorkout(
           const baseReps = typeof s.reps === 'number' ? s.reps : s.reps.min;
           return {
             serieNumber: s.serieNumber,
-            kg: histSet?.kg ?? (typeof s.reps === 'number' ? 0 : 0),
+            kg: histSet?.kg ?? 0,
             reps: histSet?.reps ?? baseReps,
             completed: false,
           };
@@ -329,7 +342,6 @@ export function saveFinishedWorkout(active: ActiveWorkout, dateKey: string): Com
     }
   }
 
-  // Mark today as done
   markWorkoutDone(dateKey);
 
   const completed: CompletedWorkout = {

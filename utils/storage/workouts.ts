@@ -24,12 +24,16 @@ export function saveCompletedWorkout(workout: CompletedWorkout): void {
 export function getCompletedWorkout(id: string): CompletedWorkout | null {
   const raw = storage.getString(KEYS.WORKOUT_PREFIX + id);
   if (!raw) return null;
-  return JSON.parse(raw) as CompletedWorkout;
+  try {
+    return JSON.parse(raw) as CompletedWorkout;
+  } catch (err) {
+    console.error(`[Storage] Failed to parse workout ${id}:`, err);
+    return null;
+  }
 }
 
 export function getAllCompletedWorkouts(): CompletedWorkout[] {
-  const index = getWorkoutIndex();
-  return index
+  return getWorkoutIndex()
     .map((id) => getCompletedWorkout(id))
     .filter((w): w is CompletedWorkout => w !== null)
     .sort((a, b) => b.startedAt - a.startedAt);
@@ -44,11 +48,20 @@ export function saveExerciseHistory(history: ExerciseHistory): void {
 export function getExerciseHistory(exerciseId: string): ExerciseHistory | null {
   const raw = storage.getString(KEYS.EXERCISE_HISTORY_PREFIX + exerciseId);
   if (!raw) return null;
-  return JSON.parse(raw) as ExerciseHistory;
+  try {
+    return JSON.parse(raw) as ExerciseHistory;
+  } catch (err) {
+    console.error(`[Storage] Failed to parse exercise history for ${exerciseId}:`, err);
+    return null;
+  }
 }
 
 function getWorkoutIndex(): string[] {
   const raw = storage.getString(KEYS.WORKOUT_INDEX);
   if (!raw) return [];
-  return JSON.parse(raw) as string[];
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
 }
